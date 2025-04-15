@@ -44,21 +44,23 @@ type
     pnlLogin: TPanel;              // Added panel for login tab
     pnlRegister: TPanel;           // Added panel for register tab
     lblPasswordHint: TLabel;       // 添加密码提示标签
-    lblUsernameHint: TLabel;       // 添加用户名提示标签
+    lblUsernameHint: TLabel;        // 添加注册按钮标签
+    lblNameHint: TLabel;           // 添加姓名提示标签
     lblContactInfoHint: TLabel;    // 添加联系方式提示标签
     lblAppTitle: TLabel;           // 添加登录页标题
     lblRegisterTitle: TLabel;      // 添加注册页标题
     pnlLoginButton: TPanel;        // 添加登录按钮面板
     lblLoginBtn: TLabel;           // 添加登录按钮标签
     pnlRegisterButton: TPanel;     // 添加注册按钮面板
-    lblRegisterBtn: TLabel;        // 添加注册按钮标签
+    lblRegisterBtn: TLabel;
     procedure btnLoginClick(Sender: TObject);
     procedure btnRegisterClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure edtRegPasswordChange(Sender: TObject); // 添加密码输入改变事件
     procedure edtRegUsernameChange(Sender: TObject); // 添加用户名输入改变事件
-    procedure edtContactInfoChange(Sender: TObject); // 添加联系方式输入改变事件
+    procedure edtContactInfoChange(Sender: TObject);
+    procedure edtNameChange(Sender: TObject); // 添加姓名输入改变事件
   private
     { Private declarations }
     function GetSelectedRoleTableName(RoleComboBox: TComboBox): string; // Modified signature
@@ -66,11 +68,13 @@ type
     procedure UpdatePasswordHint(const Password: string); // 添加更新密码提示方法
     procedure UpdateUsernameHint(const Username: string); // 添加更新用户名提示方法
     procedure UpdateContactInfoHint(const ContactInfo: string); // 添加更新联系方式提示方法
+    procedure UpdateNameHint(const Name: string); // 添加更新姓名提示方法
     procedure CustomizeFormAppearance; // 自定义表单外观
   public
     { Public declarations }
     LoginSuccessful: Boolean;
     LoggedInUserRole: string;
+    LoggedInUserID: Integer; // 添加用户ID
   end;
 
 implementation
@@ -96,14 +100,17 @@ begin
     Result := 'admin';
 end;
 
+
 procedure TLoginForm.btnLoginClick(Sender: TObject);
 var
   SelectedRoleTable: string;
   RoleType: TRoleType;
   Username, Password: string; // Define Username and Password locally
+  MerchantID: Integer; // 添加商家ID变量
 begin
   LoginSuccessful := False;
   LoggedInUserRole := '';
+  LoggedInUserID := -1; // 初始化用户ID为-1
 
   SelectedRoleTable := GetSelectedRoleTableName(cmbLoginRole); // Use cmbLoginRole
   Username := edtLoginUsername.Text; // Use edtLoginUsername
@@ -147,12 +154,20 @@ begin
     begin
       LoginSuccessful := True;
       LoggedInUserRole := cmbLoginRole.Items[cmbLoginRole.ItemIndex]; // Use cmbLoginRole
+      
+      // 获取用户ID
+      LoggedInUserID := AuthDM.GetUserID(RoleType, Username);
 
       // 根据角色创建主窗体
       if LoggedInUserRole = 'customer' then
         Application.CreateForm(TCustomerForm, gCustomerForm)
       else if LoggedInUserRole = 'merchant' then
-        Application.CreateForm(TMerchantForm, gMerchantForm)
+      begin
+        // 获取商家ID
+        MerchantID := LoggedInUserID;
+        // 修改为传递商家ID
+        TMerchantForm.ShowMerchantForm(MerchantID);
+      end
       else if LoggedInUserRole = 'delivery' then
         Application.CreateForm(TDeliveryForm, gDeliveryForm)
       else if LoggedInUserRole = 'admin' then
@@ -267,6 +282,18 @@ begin
   lblContactInfoHint.Font.Color := clGreen;
 end;
 
+procedure TLoginForm.UpdateNameHint(const Name: string);
+begin
+  if Name = '' then
+  begin
+    lblNameHint.Caption := '请输入您的不真实姓名';
+    lblNameHint.Font.Color := clGray;
+    Exit;
+  end;
+
+  lblNameHint.Caption := '姓名格式正确';
+  lblNameHint.Font.Color := clGreen;
+end;
 // 用户名输入框改变事件处理程序
 procedure TLoginForm.edtRegUsernameChange(Sender: TObject);
 begin
@@ -277,6 +304,12 @@ end;
 procedure TLoginForm.edtContactInfoChange(Sender: TObject);
 begin
   UpdateContactInfoHint(edtContactInfo.Text);
+end;
+
+// 姓名输入框改变事件处理程序
+procedure TLoginForm.edtNameChange(Sender: TObject);
+begin
+  UpdateNameHint(edtName.Text);
 end;
 
 procedure TLoginForm.btnRegisterClick(Sender: TObject);
@@ -525,4 +558,5 @@ begin
   end;
 end;
 
-end. 
+
+end.

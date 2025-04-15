@@ -1,4 +1,4 @@
-object LoginForm: TLoginForm
+﻿object LoginForm: TLoginForm
   Left = 0
   Top = 0
   Margins.Left = 4
@@ -28,7 +28,7 @@ object LoginForm: TLoginForm
     Margins.Top = 4
     Margins.Right = 4
     Margins.Bottom = 4
-    ActivePage = tsLogin
+    ActivePage = tsRegister
     Align = alClient
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -39,6 +39,8 @@ object LoginForm: TLoginForm
     Style = tsFlatButtons
     TabOrder = 0
     StyleElements = [seFont, seClient]
+    ExplicitWidth = 654
+    ExplicitHeight = 609
     object tsLogin: TTabSheet
       Margins.Left = 4
       Margins.Top = 4
@@ -55,6 +57,8 @@ object LoginForm: TLoginForm
         Color = clWhite
         ParentBackground = False
         TabOrder = 0
+        ExplicitWidth = 646
+        ExplicitHeight = 563
         object lblLoginRole: TLabel
           Left = 80
           Top = 120
@@ -253,7 +257,7 @@ object LoginForm: TLoginForm
           Margins.Top = 4
           Margins.Right = 4
           Margins.Bottom = 4
-          Caption = #35282#33394#31168#22411
+          Caption = #35282#33394#31867#22411
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clGrayText
           Font.Height = -20
@@ -382,6 +386,19 @@ object LoginForm: TLoginForm
           Font.Style = [fsBold]
           ParentFont = False
         end
+        object lblNameHint: TLabel
+          Left = 200
+          Top = 329
+          Width = 80
+          Height = 20
+          Caption = '请输入您的不真实姓名'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clGray
+          Font.Height = -15
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
+        end
         object cmbRegRole: TComboBox
           Left = 200
           Top = 76
@@ -457,6 +474,7 @@ object LoginForm: TLoginForm
           Font.Style = []
           ParentFont = False
           TabOrder = 3
+          OnChange = edtNameChange
         end
         object edtContactInfo: TEdit
           Left = 200

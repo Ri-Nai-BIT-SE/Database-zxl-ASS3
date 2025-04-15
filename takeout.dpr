@@ -54,8 +54,6 @@ begin
     // 释放数据模块实例
     if Assigned(DM) then
       DM.Free;
-    if Assigned(AuthDM) then // 在这里释放AuthDM
-      FreeAndNil(AuthDM);
   end;
 end.
 

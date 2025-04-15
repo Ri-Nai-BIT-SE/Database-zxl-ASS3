@@ -33,6 +33,9 @@ type
 
     // 检查联系方式是否存在
     function CheckContactInfoExists(const RoleType: TRoleType; const ContactInfo: string): Boolean;
+    
+    // 获取用户ID
+    function GetUserID(const RoleType: TRoleType; const Username: string): Integer;
 
   end;
 
@@ -221,6 +224,46 @@ begin
   try
     FDQueryCheckExists.Open();
     Result := (FDQueryCheckExists.Fields[0].AsInteger > 0);
+  finally
+    FDQueryCheckExists.Close;
+  end;
+end;
+
+function TAuthDM.GetUserID(const RoleType: TRoleType; const Username: string): Integer;
+var
+  RoleTable: string;
+  IDField: string;
+  SQL: string;
+begin
+  Result := -1; // 默认返回-1表示未找到
+  
+  // 获取对应的角色表名和ID字段名
+  RoleTable := DM.GetRoleTableName(RoleType);
+  if (RoleTable = '') or (Username = '') then
+    Exit;
+    
+  // 设置每种角色的ID字段名
+  case RoleType of
+    rtCustomer: IDField := 'customer_id';
+    rtMerchant: IDField := 'merchant_id';
+    rtDelivery: IDField := 'delivery_man_id';
+    rtAdmin: IDField := 'admin_id';
+  else
+    Exit;
+  end;
+  
+  // 确保连接已初始化
+  Initialize;
+  
+  // 执行查询获取ID
+  SQL := Format('SELECT %s FROM %s WHERE username = :username', [IDField, RoleTable]);
+  FDQueryCheckExists.SQL.Text := SQL;
+  FDQueryCheckExists.Params.ParamByName('username').AsString := Username;
+  
+  try
+    FDQueryCheckExists.Open();
+    if not FDQueryCheckExists.IsEmpty then
+      Result := FDQueryCheckExists.Fields[0].AsInteger;
   finally
     FDQueryCheckExists.Close;
   end;
