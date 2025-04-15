@@ -1,4 +1,4 @@
-unit AuthDataModule;
+﻿unit AuthDataModule;
 
 interface
 
@@ -15,6 +15,7 @@ type
   TAuthDM = class(TDataModule)
     FDQueryLogin: TFDQuery;
     FDQueryRegister: TFDQuery;
+    FDQueryCheckExists: TFDQuery;
   private
     { Private declarations }
   public
@@ -28,6 +29,11 @@ type
     // 用户注册方法
     function RegisterUser(const RoleType: TRoleType; const Username, Password, Name, ContactInfo: string;
                           const Address: string = ''; const BusinessAddress: string = ''): Boolean;
+    function CheckUsernameExists(const RoleType: TRoleType; const Username: string): Boolean;
+
+    // 检查联系方式是否存在
+    function CheckContactInfoExists(const RoleType: TRoleType; const ContactInfo: string): Boolean;
+
   end;
 
 var
@@ -52,12 +58,16 @@ begin
       
     if not Assigned(FDQueryRegister) then
       FDQueryRegister := TFDQuery.Create(Self);
+      
+    if not Assigned(FDQueryCheckExists) then
+      FDQueryCheckExists := TFDQuery.Create(Self);
     
     // 设置查询组件的连接 - 这一步需要DM.FDConnection有效
     if Assigned(DM.FDConnection) then
     begin
       FDQueryLogin.Connection := DM.FDConnection;
       FDQueryRegister.Connection := DM.FDConnection;
+      FDQueryCheckExists.Connection := DM.FDConnection;
     end
     else
     begin
@@ -157,6 +167,62 @@ begin
       ShowMessage('注册失败: ' + E.Message);
       Result := False;
     end;
+  end;
+end;
+
+function TAuthDM.CheckUsernameExists(const RoleType: TRoleType; const Username: string): Boolean;
+var
+  RoleTable: string;
+  SQL: string;
+begin
+  Result := False;
+
+  // 获取对应的角色表名
+  RoleTable := DM.GetRoleTableName(RoleType);
+  if (RoleTable = '') or (Username = '') then
+    Exit;
+
+  // 确保连接已初始化
+  Initialize;
+
+  // 执行检查查询
+  SQL := Format('SELECT COUNT(*) FROM %s WHERE username = :username', [RoleTable]);
+  FDQueryCheckExists.SQL.Text := SQL;
+  FDQueryCheckExists.Params.ParamByName('username').AsString := Username;
+
+  try
+    FDQueryCheckExists.Open();
+    Result := (FDQueryCheckExists.Fields[0].AsInteger > 0);
+  finally
+    FDQueryCheckExists.Close;
+  end;
+end;
+
+function TAuthDM.CheckContactInfoExists(const RoleType: TRoleType; const ContactInfo: string): Boolean;
+var
+  RoleTable: string;
+  SQL: string;
+begin
+  Result := False;
+
+  // 获取对应的角色表名
+  RoleTable := DM.GetRoleTableName(RoleType);
+  if (RoleTable = '') or (ContactInfo = '') then
+    Exit;
+
+  // 确保连接已初始化
+  Initialize;
+
+  // 执行检查查询
+  SQL := Format('SELECT COUNT(*) FROM %s WHERE contact_info = :contact_info', [RoleTable]);
+  FDQueryCheckExists.SQL.Text := SQL;
+  FDQueryCheckExists.Params.ParamByName('contact_info').AsString := ContactInfo;
+
+  try
+    FDQueryCheckExists.Open();
+    Result := (FDQueryCheckExists.Fields[0].AsInteger > 0);
+  finally
+    FDQueryCheckExists.Close;
   end;
 end;
 

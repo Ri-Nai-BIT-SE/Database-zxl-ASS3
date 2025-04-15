@@ -66,8 +66,6 @@ type
     procedure UpdatePasswordHint(const Password: string); // 添加更新密码提示方法
     procedure UpdateUsernameHint(const Username: string); // 添加更新用户名提示方法
     procedure UpdateContactInfoHint(const ContactInfo: string); // 添加更新联系方式提示方法
-    function CheckUsernameExists(const SelectedRoleTable, Username: string): Boolean; // 检查用户名是否存在
-    function CheckContactInfoExists(const SelectedRoleTable, ContactInfo: string): Boolean; // 检查联系方式是否存在
     procedure CustomizeFormAppearance; // 自定义表单外观
   public
     { Public declarations }
@@ -232,76 +230,6 @@ begin
   Result := True;
 end;
 
-// 修改用户名是否存在的检查函数
-function TLoginForm.CheckUsernameExists(const SelectedRoleTable, Username: string): Boolean;
-var
-  SQLCheck: string;
-  Query: TFDQuery;
-begin
-  Result := False;
-  if (SelectedRoleTable = '') or (Username = '') then 
-    Exit;
-    
-  // 创建临时查询对象
-  Query := TFDQuery.Create(nil);
-  try 
-    // 确保使用管理员角色连接（具有查询所有表的权限）
-    if not DM.Connect(rtAdmin) then
-      Exit;
-    
-    Query.Connection := DM.FDConnection;
-    
-    // 检查用户名是否已存在
-    SQLCheck := Format('SELECT COUNT(*) FROM %s WHERE username = :username', [SelectedRoleTable]);
-    Query.SQL.Text := SQLCheck;
-    Query.Params.ParamByName('username').AsString := Username;
-    
-    try
-      Query.Open();
-      Result := (Query.Fields[0].AsInteger > 0);
-    finally
-      Query.Close;
-    end;
-  finally
-    Query.Free;
-  end;
-end;
-
-// 修改联系方式是否存在的检查函数
-function TLoginForm.CheckContactInfoExists(const SelectedRoleTable, ContactInfo: string): Boolean;
-var
-  SQLCheck: string;
-  Query: TFDQuery;
-begin
-  Result := False;
-  if (SelectedRoleTable = '') or (ContactInfo = '') then
-    Exit;
-    
-  // 创建临时查询对象
-  Query := TFDQuery.Create(nil);
-  try
-    // 确保使用管理员角色连接（具有查询所有表的权限）
-    if not DM.Connect(rtAdmin) then
-      Exit;
-    
-    Query.Connection := DM.FDConnection;
-    
-    // 检查联系方式是否已存在
-    SQLCheck := Format('SELECT COUNT(*) FROM %s WHERE contact_info = :contact_info', [SelectedRoleTable]);
-    Query.SQL.Text := SQLCheck;
-    Query.Params.ParamByName('contact_info').AsString := ContactInfo;
-    
-    try
-      Query.Open();
-      Result := (Query.Fields[0].AsInteger > 0);
-    finally
-      Query.Close;
-    end;
-  finally
-    Query.Free;
-  end;
-end;
-
 // 更新用户名提示的方法
 procedure TLoginForm.UpdateUsernameHint(const Username: string);
 begin
@@ -411,8 +339,18 @@ begin
     Exit;
   end;
   
-  // 检查用户名是否已存在
-  if CheckUsernameExists(SelectedRoleTable, Username) then
+  // 获取角色类型
+  RoleType := DM.GetRoleTypeFromString(cmbRegRole.Items[cmbRegRole.ItemIndex]);
+  
+  // 确保 AuthDM 可用
+  if not Assigned(AuthDM) then
+  begin
+      MessageDlg('认证模块未初始化，无法进行注册。', mtError, [mbOK], 0);
+      Exit;
+  end;
+
+  // 使用 AuthDM 检查用户名是否已存在
+  if AuthDM.CheckUsernameExists(RoleType, Username) then
   begin
       lblUsernameHint.Caption := '该用户名已被注册，请选择其他用户名';
       lblUsernameHint.Font.Color := clRed;
@@ -420,17 +358,14 @@ begin
     Exit;
   end;
   
-  // 检查联系方式是否已存在
-  if CheckContactInfoExists(SelectedRoleTable, ContactInfo) then
+  // 使用 AuthDM 检查联系方式是否已存在
+  if AuthDM.CheckContactInfoExists(RoleType, ContactInfo) then
   begin
       lblContactInfoHint.Caption := '该联系方式已被注册，请使用其他联系方式';
       lblContactInfoHint.Font.Color := clRed;
     edtContactInfo.SetFocus;
     Exit;
   end;
-  
-  // 获取角色类型
-  RoleType := DM.GetRoleTypeFromString(cmbRegRole.Items[cmbRegRole.ItemIndex]);
   
   // 使用认证数据模块进行注册
   if AuthDM.RegisterUser(RoleType, Username, Password, Name, ContactInfo, Address, BusinessAddress) then

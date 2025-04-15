@@ -1,15 +1,17 @@
 object AuthDM: TAuthDM
-  OldCreateOrder = False
-  Height = 250
-  Width = 350
+  Height = 313
+  Width = 438
+  PixelsPerInch = 120
   object FDQueryLogin: TFDQuery
-    Connection = nil
-    Left = 48
-    Top = 32
+    Left = 60
+    Top = 40
   end
   object FDQueryRegister: TFDQuery
-    Connection = nil
-    Left = 48
-    Top = 96
+    Left = 60
+    Top = 120
   end
-end 
+  object FDQueryCheckExists: TFDQuery
+    Left = 60
+    Top = 180
+  end
+end

@@ -49,7 +49,7 @@ object LoginForm: TLoginForm
         Left = 0
         Top = 0
         Width = 642
-        Height = 565
+        Height = 554
         Align = alClient
         BevelOuter = bvNone
         Color = clWhite
@@ -238,7 +238,7 @@ object LoginForm: TLoginForm
         Left = 0
         Top = 0
         Width = 642
-        Height = 565
+        Height = 554
         Align = alClient
         BevelOuter = bvNone
         Color = clWhite

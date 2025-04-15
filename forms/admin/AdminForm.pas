@@ -10,11 +10,11 @@ uses
   FireDAC.Phys, FireDAC.VCLUI.Wait, Data.DB, FireDAC.Comp.Client, 
   FireDAC.Phys.PG, FireDAC.Phys.PGDef, FireDAC.Stan.Param, 
   FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, Vcl.Grids, Vcl.DBGrids, 
-  FireDAC.Comp.DataSet, Vcl.DBCtrls, Vcl.Mask, Vcl.Buttons;
+  FireDAC.Comp.DataSet, Vcl.DBCtrls, Vcl.Mask, Vcl.Buttons,
+  System.Generics.Collections;
 
 type
   TAdminForm = class(TForm)
-    DBConnect: TFDConnection;
     PageControl: TPageControl;
     TabMerchant: TTabSheet;
     TabDelivery: TTabSheet;
@@ -87,6 +87,7 @@ type
     procedure qryDeliveryAfterPost(DataSet: TDataSet);
   private
     procedure ConnectToDatabase;
+    procedure AdjustGridColumnWidths(AGrid: TDBGrid; const AColumnWidths: TDictionary<string, Integer>);
   public
     class procedure ShowAdminForm;
   end;
@@ -106,7 +107,7 @@ begin
   // 确保只创建一个实例
   if not Assigned(gAdminForm) then
     Application.CreateForm(TAdminForm, gAdminForm);
-    
+
   // 显示窗体
   gAdminForm.Show;
 end;
@@ -119,21 +120,21 @@ begin
     
   // 使用管理员角色连接
   if not DM.Connect(rtAdmin) then
-    Exit;
-    
-  // 设置当前窗体的数据库连接
-  DBConnect.ConnectionString := DM.FDConnection.ConnectionString;
-  DBConnect.Connected := True;
-  
-  // 设置所有查询的连接
-  tmpQuery.Connection := DBConnect;
-  qryMerchant.Connection := DBConnect;
-  qryDelivery.Connection := DBConnect;
-  qryOrder.Connection := DBConnect;
+  begin
+    ShowMessage('数据库连接失败！请检查数据库服务是否运行以及连接配置是否正确。');
+    Exit; // 连接失败，退出
+  end;
+
+  // 设置所有查询的连接为 DataModule 的连接
+  tmpQuery.Connection := DM.FDConnection;
+  qryMerchant.Connection := DM.FDConnection;
+  qryDelivery.Connection := DM.FDConnection;
+  qryOrder.Connection := DM.FDConnection;
 end;
 
 procedure TAdminForm.FormCreate(Sender: TObject);
 begin
+  ConnectToDatabase;
   Caption := '管理员界面';
   
   // 初始化ComboBox
@@ -171,10 +172,7 @@ end;
 
 procedure TAdminForm.FormShow(Sender: TObject);
 begin
-  // 连接数据库并加载初始数据
-  ConnectToDatabase;
-  
-  // 显示初始页签的数据
+  // 需要手动调用 TabSheetShow
   case PageControl.ActivePageIndex of
     0: TabMerchantShow(Sender);
     1: TabDeliveryShow(Sender);
@@ -187,33 +185,86 @@ end;
 
 procedure TAdminForm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  // 断开数据库连接
-  if DBConnect.Connected then
-    DBConnect.Connected := False;
-    
+  // 不再需要断开窗体自己的连接
   Action := caFree;
   gAdminForm := nil; // 清除全局引用
+end;
+
+procedure TAdminForm.AdjustGridColumnWidths(AGrid: TDBGrid; const AColumnWidths: TDictionary<string, Integer>);
+var
+  I: Integer;
+  Col: TColumn;
+  FieldName: string;
+  Width: Integer;
+begin
+  if not Assigned(AGrid) or not Assigned(AColumnWidths) or (AGrid.Columns.Count = 0) then
+    Exit; // Exit if grid or dictionary is not assigned, or grid has no columns
+
+  try
+    // Iterate through the grid's columns
+    for I := 0 to AGrid.Columns.Count - 1 do
+    begin
+      Col := AGrid.Columns[I];
+      FieldName := Col.FieldName;
+
+      // Check if this field name exists in the dictionary
+      if AColumnWidths.TryGetValue(FieldName, Width) then
+      begin
+        Col.Width := Width; // Set the width from the dictionary
+      end;
+      // Optional: Set a default width for columns not in the dictionary
+      // else begin
+      //   Col.Width := 100; // Example default width
+      // end;
+    end;
+  except
+    on E: Exception do
+      // Silently ignore errors during width adjustment
+      // Consider logging the error: Log.d('Error adjusting column widths: ' + E.Message);
+      ;
+  end;
 end;
 
 procedure TAdminForm.TabMerchantShow(Sender: TObject);
 var
   SQL: string;
+  MerchantWidths: TDictionary<string, Integer>;
 begin
   SQL := 'SELECT merchant_id, username, name, contact_info, business_address, status FROM merchant';
-  
+
   if cmbMerchantStatus.Text <> '' then
     SQL := SQL + ' WHERE status = ' + QuotedStr(cmbMerchantStatus.Text);
-    
+
   SQL := SQL + ' ORDER BY merchant_id';
-  
+
   qryMerchant.Close;
   qryMerchant.SQL.Text := SQL;
   qryMerchant.Open;
+
+  // Adjust column widths after opening the query
+  if qryMerchant.Active then
+  begin
+    MerchantWidths := TDictionary<string, Integer>.Create;
+    try
+      // Define desired widths for merchant grid
+      MerchantWidths.AddOrSetValue('merchant_id', 80);
+      MerchantWidths.AddOrSetValue('username', 120);
+      MerchantWidths.AddOrSetValue('name', 150);
+      MerchantWidths.AddOrSetValue('contact_info', 180);
+      MerchantWidths.AddOrSetValue('business_address', 220);
+      MerchantWidths.AddOrSetValue('status', 80);
+
+      AdjustGridColumnWidths(gridMerchant, MerchantWidths);
+    finally
+      MerchantWidths.Free;
+    end;
+  end;
 end;
 
 procedure TAdminForm.TabDeliveryShow(Sender: TObject);
 var
   SQL: string;
+  DeliveryWidths: TDictionary<string, Integer>;
 begin
   SQL := 'SELECT delivery_man_id, username, name, contact_info, status FROM delivery_man';
   
@@ -225,28 +276,67 @@ begin
   qryDelivery.Close;
   qryDelivery.SQL.Text := SQL;
   qryDelivery.Open;
+
+  // Adjust column widths after opening the query
+  if qryDelivery.Active then
+  begin
+    DeliveryWidths := TDictionary<string, Integer>.Create;
+    try
+      // Define desired widths for delivery grid
+      DeliveryWidths.AddOrSetValue('delivery_man_id', 80);
+      DeliveryWidths.AddOrSetValue('username', 120);
+      DeliveryWidths.AddOrSetValue('name', 150);
+      DeliveryWidths.AddOrSetValue('contact_info', 180);
+      DeliveryWidths.AddOrSetValue('status', 100);
+
+      AdjustGridColumnWidths(gridDelivery, DeliveryWidths);
+    finally
+      DeliveryWidths.Free;
+    end;
+  end;
 end;
 
 procedure TAdminForm.TabOrderShow(Sender: TObject);
 var
   SQL: string;
+  OrderWidths: TDictionary<string, Integer>;
 begin
-  SQL := 'SELECT o.order_id, c.name as customer_name, m.name as merchant_name, ' +
-         'COALESCE(d.name, ''未分配'') as delivery_name, o.total_amount, o.status, ' +
-         'o.created_at, o.updated_at ' +
-         'FROM order_info o ' +
-         'JOIN customer c ON o.customer_id = c.customer_id ' +
-         'JOIN merchant m ON o.merchant_id = m.merchant_id ' +
-         'LEFT JOIN delivery_man d ON o.delivery_man_id = d.delivery_man_id';
-  
+  // Use v_order_details view
+  SQL := 'SELECT order_id, customer_name, merchant_name, ' +
+         'COALESCE(delivery_man_name, ''未分配'') as delivery_name, total_amount, order_status as status, ' + // Use aliases from the view/query
+         'created_at, updated_at ' +
+         'FROM v_order_details';
+
   if cmbOrderStatus.Text <> '' then
-    SQL := SQL + ' WHERE o.status = ' + QuotedStr(cmbOrderStatus.Text);
-    
-  SQL := SQL + ' ORDER BY o.order_id';
-  
+    // Filter by order_status from the view
+    SQL := SQL + ' WHERE order_status = ' + QuotedStr(cmbOrderStatus.Text);
+
+  SQL := SQL + ' ORDER BY order_id';
+
   qryOrder.Close;
   qryOrder.SQL.Text := SQL;
   qryOrder.Open;
+
+  // Adjust column widths after opening the query
+  if qryOrder.Active then
+  begin
+    OrderWidths := TDictionary<string, Integer>.Create;
+    try
+      // Define desired widths for order grid (use aliases/final names)
+      OrderWidths.AddOrSetValue('order_id', 70);
+      OrderWidths.AddOrSetValue('customer_name', 120);
+      OrderWidths.AddOrSetValue('merchant_name', 150);
+      OrderWidths.AddOrSetValue('delivery_name', 120); // Alias from COALESCE
+      OrderWidths.AddOrSetValue('total_amount', 90);
+      OrderWidths.AddOrSetValue('status', 100);        // Alias from order_status
+      OrderWidths.AddOrSetValue('created_at', 140);
+      OrderWidths.AddOrSetValue('updated_at', 140);
+
+      AdjustGridColumnWidths(gridOrder, OrderWidths);
+    finally
+      OrderWidths.Free;
+    end;
+  end;
 end;
 
 procedure TAdminForm.TabStatsShow(Sender: TObject);
@@ -306,35 +396,35 @@ var
 begin
   StartDate := dtpStartDate.Date;
   EndDate := dtpEndDate.Date;
-  
-  // 计算总收入
+
+  // 计算总收入 - 使用 v_order_details 视图
   SQL := 'SELECT COALESCE(SUM(total_amount), 0) as total_revenue ' +
-         'FROM order_info ' +
-         'WHERE status = ''delivered'' ' +
+         'FROM v_order_details ' +
+         'WHERE order_status = ''delivered'' ' + // 按视图中的 order_status 过滤
          'AND created_at >= :start_date ' +
-         'AND created_at <= :end_date';
-  
+         'AND created_at <= :end_date'; // 注意：结束日期处理保持不变
+
   tmpQuery.Close;
   tmpQuery.SQL.Text := SQL;
   tmpQuery.ParamByName('start_date').AsDate := StartDate;
   tmpQuery.ParamByName('end_date').AsDate := EndDate + 1;  // 加1天以包含结束日期当天
   tmpQuery.Open;
-  
+
   TotalRevenue := tmpQuery.FieldByName('total_revenue').AsFloat;
   lblRevenueValue.Caption := FormatFloat('#,##0.00', TotalRevenue) + ' 元';
-  
-  // 计算订单总数
+
+  // 计算订单总数 - 这个查询不需要 total_amount，保持不变
   SQL := 'SELECT COUNT(*) as total_orders ' +
-         'FROM order_info ' +
+         'FROM order_info ' + // 这里可以直接查 order_info 获取总数
          'WHERE created_at >= :start_date ' +
          'AND created_at <= :end_date';
-  
+
   tmpQuery.Close;
   tmpQuery.SQL.Text := SQL;
   tmpQuery.ParamByName('start_date').AsDate := StartDate;
   tmpQuery.ParamByName('end_date').AsDate := EndDate + 1;  // 加1天以包含结束日期当天
   tmpQuery.Open;
-  
+
   TotalOrders := tmpQuery.FieldByName('total_orders').AsInteger;
   lblOrdersValue.Caption := IntToStr(TotalOrders) + ' 单';
 end;

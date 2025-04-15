@@ -1,4 +1,4 @@
-object AdminForm: TAdminForm
+﻿object AdminForm: TAdminForm
   Left = 0
   Top = 0
   Margins.Left = 7
@@ -630,17 +630,7 @@ object AdminForm: TAdminForm
       end
     end
   end
-  object DBConnect: TFDConnection
-    Params.Strings = (
-      'User_Name=takeout_admin'
-      'Password=takeout_admin@123'
-      'Database=db_takeout'
-      'Port=26000'
-      'Server=192.168.202.129'
-      'DriverID=PG')
-    Left = 920
-    Top = 16
-  end
+
   object dsMerchant: TDataSource
     DataSet = qryMerchant
     Left = 920
@@ -648,7 +638,7 @@ object AdminForm: TAdminForm
   end
   object qryMerchant: TFDQuery
     AfterPost = qryMerchantAfterPost
-    Connection = DBConnect
+    Connection = nil
     Left = 920
     Top = 136
   end
@@ -659,7 +649,7 @@ object AdminForm: TAdminForm
   end
   object qryDelivery: TFDQuery
     AfterPost = qryDeliveryAfterPost
-    Connection = DBConnect
+    Connection = nil
     Left = 840
     Top = 136
   end
@@ -669,12 +659,12 @@ object AdminForm: TAdminForm
     Top = 72
   end
   object qryOrder: TFDQuery
-    Connection = DBConnect
+    Connection = nil
     Left = 760
     Top = 136
   end
   object tmpQuery: TFDQuery
-    Connection = DBConnect
+    Connection = nil
     Left = 680
     Top = 136
   end
