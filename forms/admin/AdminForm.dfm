@@ -79,7 +79,7 @@
           Margins.Right = 4
           Margins.Bottom = 4
           DataSource = dsMerchant
-          Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
+          Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack, dgEditing]
           TabOrder = 0
           TitleFont.Charset = DEFAULT_CHARSET
           TitleFont.Color = clWindowText
@@ -210,7 +210,7 @@
           Margins.Right = 4
           Margins.Bottom = 4
           DataSource = dsDelivery
-          Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
+          Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack, dgEditing]
           TabOrder = 0
           TitleFont.Charset = DEFAULT_CHARSET
           TitleFont.Color = clWindowText
@@ -294,13 +294,143 @@
         end
       end
     end
+    object TabCustomer: TTabSheet
+      Margins.Left = 4
+      Margins.Top = 4
+      Margins.Right = 4
+      Margins.Bottom = 4
+      Caption = #28040#36153#32773#31649#29702
+      ImageIndex = 2
+      OnShow = TabCustomerShow
+      object pnlCustomer: TPanel
+        Left = 0
+        Top = 0
+        Width = 1190
+        Height = 802
+        Margins.Left = 4
+        Margins.Top = 4
+        Margins.Right = 4
+        Margins.Bottom = 4
+        Align = alClient
+        BevelOuter = bvNone
+        TabOrder = 0
+        object lblCustomerTitle: TLabel
+          Left = 29
+          Top = 19
+          Width = 144
+          Height = 30
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
+          Caption = #28040#36153#32773#31649#29702
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -22
+          Font.Name = 'Segoe UI'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object gridCustomer: TDBGrid
+          Left = 29
+          Top = 144
+          Width = 1133
+          Height = 576
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
+          DataSource = dsCustomer
+          Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack, dgEditing]
+          TabOrder = 0
+          TitleFont.Charset = DEFAULT_CHARSET
+          TitleFont.Color = clWindowText
+          TitleFont.Height = -18
+          TitleFont.Name = 'Segoe UI'
+          TitleFont.Style = []
+        end
+        object navCustomer: TDBNavigator
+          Left = 29
+          Top = 732
+          Width = 1128
+          Height = 48
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
+          DataSource = dsCustomer
+          VisibleButtons = [nbFirst, nbPrior, nbNext, nbLast, nbEdit, nbPost, nbCancel, nbRefresh]
+          TabOrder = 1
+        end
+        object pnlCustomerFilter: TPanel
+          Left = 29
+          Top = 60
+          Width = 1133
+          Height = 72
+          Margins.Left = 4
+          Margins.Top = 4
+          Margins.Right = 4
+          Margins.Bottom = 4
+          BevelOuter = bvNone
+          TabOrder = 2
+          object lblWalletBalance: TLabel
+            Left = 19
+            Top = 24
+            Width = 114
+            Height = 25
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
+            Caption = #38134#34892#20313#39069#65306
+          end
+          object edtWalletBalance: TEdit
+            Left = 142
+            Top = 19
+            Width = 240
+            Height = 28
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
+            TabOrder = 0
+          end
+          object btnFilterCustomer: TButton
+            Left = 403
+            Top = 19
+            Width = 120
+            Height = 34
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
+            Caption = #31579#36873
+            TabOrder = 1
+            OnClick = btnFilterCustomerClick
+          end
+          object btnResetCustomer: TButton
+            Left = 547
+            Top = 19
+            Width = 120
+            Height = 34
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
+            Caption = #37325#32622
+            TabOrder = 2
+            OnClick = btnResetCustomerClick
+          end
+        end
+      end
+    end
     object TabOrder: TTabSheet
       Margins.Left = 4
       Margins.Top = 4
       Margins.Right = 4
       Margins.Bottom = 4
       Caption = #35746#21333#31649#29702
-      ImageIndex = 2
+      ImageIndex = 3
       OnShow = TabOrderShow
       object pnlOrder: TPanel
         Left = 0
@@ -341,7 +471,7 @@
           Margins.Right = 4
           Margins.Bottom = 4
           DataSource = dsOrder
-          Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
+          Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack, dgEditing]
           TabOrder = 0
           TitleFont.Charset = DEFAULT_CHARSET
           TitleFont.Color = clWindowText
@@ -431,7 +561,7 @@
       Margins.Right = 4
       Margins.Bottom = 4
       Caption = #32479#35745#25253#34920
-      ImageIndex = 3
+      ImageIndex = 4
       OnShow = TabStatsShow
       object pnlStats: TPanel
         Left = 0
@@ -630,7 +760,6 @@
       end
     end
   end
-
   object dsMerchant: TDataSource
     DataSet = qryMerchant
     Left = 920
@@ -638,7 +767,7 @@
   end
   object qryMerchant: TFDQuery
     AfterPost = qryMerchantAfterPost
-    Connection = nil
+    AfterOpen = qryMerchantAfterOpen
     Left = 920
     Top = 136
   end
@@ -649,7 +778,7 @@
   end
   object qryDelivery: TFDQuery
     AfterPost = qryDeliveryAfterPost
-    Connection = nil
+    AfterOpen = qryDeliveryAfterOpen
     Left = 840
     Top = 136
   end
@@ -659,13 +788,24 @@
     Top = 72
   end
   object qryOrder: TFDQuery
-    Connection = nil
+    AfterPost = qryOrderAfterPost
+    AfterOpen = qryOrderAfterOpen
     Left = 760
     Top = 136
   end
   object tmpQuery: TFDQuery
-    Connection = nil
     Left = 680
     Top = 136
+  end
+  object dsCustomer: TDataSource
+    DataSet = qryCustomer
+    Left = 680
+    Top = 72
+  end
+  object qryCustomer: TFDQuery
+    AfterPost = qryCustomerAfterPost
+    AfterOpen = qryCustomerAfterOpen
+    Left = 680
+    Top = 200
   end
 end

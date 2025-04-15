@@ -20,6 +20,7 @@ type
     TabDelivery: TTabSheet;
     TabOrder: TTabSheet;
     TabStats: TTabSheet;
+    TabCustomer: TTabSheet;
     pnlMerchant: TPanel;
     lblMerchantTitle: TLabel;
     gridMerchant: TDBGrid;
@@ -68,6 +69,17 @@ type
     lblTotalOrders: TLabel;
     lblOrdersValue: TLabel;
     tmpQuery: TFDQuery;
+    pnlCustomer: TPanel;
+    lblCustomerTitle: TLabel;
+    gridCustomer: TDBGrid;
+    navCustomer: TDBNavigator;
+    pnlCustomerFilter: TPanel;
+    lblWalletBalance: TLabel;
+    edtWalletBalance: TEdit;
+    btnFilterCustomer: TButton;
+    btnResetCustomer: TButton;
+    dsCustomer: TDataSource;
+    qryCustomer: TFDQuery;
     
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -76,15 +88,25 @@ type
     procedure TabDeliveryShow(Sender: TObject);
     procedure TabOrderShow(Sender: TObject);
     procedure TabStatsShow(Sender: TObject);
+    procedure TabCustomerShow(Sender: TObject);
     procedure btnFilterMerchantClick(Sender: TObject);
     procedure btnResetMerchantClick(Sender: TObject);
     procedure btnFilterDeliveryClick(Sender: TObject);
     procedure btnResetDeliveryClick(Sender: TObject);
     procedure btnFilterOrderClick(Sender: TObject);
     procedure btnResetOrderClick(Sender: TObject);
+    procedure btnFilterCustomerClick(Sender: TObject);
+    procedure btnResetCustomerClick(Sender: TObject);
     procedure btnGenerateStatsClick(Sender: TObject);
     procedure qryMerchantAfterPost(DataSet: TDataSet);
     procedure qryDeliveryAfterPost(DataSet: TDataSet);
+    procedure qryOrderAfterPost(DataSet: TDataSet);
+    procedure qryCustomerAfterPost(DataSet: TDataSet);
+    procedure GetText(Sender: TField; var Text: String; DisplayText: Boolean);
+    procedure qryMerchantAfterOpen(DataSet: TDataSet);
+    procedure qryDeliveryAfterOpen(DataSet: TDataSet);
+    procedure qryOrderAfterOpen(DataSet: TDataSet);
+    procedure qryCustomerAfterOpen(DataSet: TDataSet);
   private
     procedure ConnectToDatabase;
     procedure AdjustGridColumnWidths(AGrid: TDBGrid; const AColumnWidths: TDictionary<string, Integer>);
@@ -129,6 +151,7 @@ begin
   tmpQuery.Connection := DM.FDConnection;
   qryMerchant.Connection := DM.FDConnection;
   qryDelivery.Connection := DM.FDConnection;
+  qryCustomer.Connection := DM.FDConnection;
   qryOrder.Connection := DM.FDConnection;
 end;
 
@@ -176,8 +199,9 @@ begin
   case PageControl.ActivePageIndex of
     0: TabMerchantShow(Sender);
     1: TabDeliveryShow(Sender);
-    2: TabOrderShow(Sender);
-    3: TabStatsShow(Sender);
+    2: TabCustomerShow(Sender);
+    3: TabOrderShow(Sender);
+    4: TabStatsShow(Sender);
   else
     TabMerchantShow(Sender);
   end;
@@ -344,6 +368,42 @@ begin
   btnGenerateStatsClick(nil);
 end;
 
+procedure TAdminForm.TabCustomerShow(Sender: TObject);
+var
+  SQL: string;
+  CustomerWidths: TDictionary<string, Integer>;
+begin
+  SQL := 'SELECT customer_id, username, name, contact_info, wallet_balance, address FROM customer';
+
+  if edtWalletBalance.Text <> '' then
+    SQL := SQL + ' WHERE wallet_balance >= ' + edtWalletBalance.Text;
+
+  SQL := SQL + ' ORDER BY customer_id';
+
+  qryCustomer.Close;
+  qryCustomer.SQL.Text := SQL;
+  qryCustomer.Open;
+
+  // Adjust column widths after opening the query
+  if qryCustomer.Active then
+  begin
+    CustomerWidths := TDictionary<string, Integer>.Create;
+    try
+      // Define desired widths for customer grid
+      CustomerWidths.AddOrSetValue('customer_id', 80);
+      CustomerWidths.AddOrSetValue('username', 120);
+      CustomerWidths.AddOrSetValue('name', 150);
+      CustomerWidths.AddOrSetValue('contact_info', 180);
+      CustomerWidths.AddOrSetValue('wallet_balance', 100);
+      CustomerWidths.AddOrSetValue('address', 200);
+
+      AdjustGridColumnWidths(gridCustomer, CustomerWidths);
+    finally
+      CustomerWidths.Free;
+    end;
+  end;
+end;
+
 procedure TAdminForm.btnFilterMerchantClick(Sender: TObject);
 begin
   TabMerchantShow(Sender);
@@ -377,14 +437,15 @@ begin
   TabOrderShow(Sender);
 end;
 
-procedure TAdminForm.qryMerchantAfterPost(DataSet: TDataSet);
+procedure TAdminForm.btnFilterCustomerClick(Sender: TObject);
 begin
-  TabMerchantShow(nil);
+  TabCustomerShow(Sender);
 end;
 
-procedure TAdminForm.qryDeliveryAfterPost(DataSet: TDataSet);
+procedure TAdminForm.btnResetCustomerClick(Sender: TObject);
 begin
-  TabDeliveryShow(nil);
+  edtWalletBalance.Text := '';
+  TabCustomerShow(Sender);
 end;
 
 procedure TAdminForm.btnGenerateStatsClick(Sender: TObject);
@@ -427,6 +488,57 @@ begin
 
   TotalOrders := tmpQuery.FieldByName('total_orders').AsInteger;
   lblOrdersValue.Caption := IntToStr(TotalOrders) + ' 单';
+end;
+
+procedure TAdminForm.qryMerchantAfterPost(DataSet: TDataSet);
+begin
+  TabMerchantShow(nil);
+end;
+
+procedure TAdminForm.qryMerchantAfterOpen(DataSet: TDataSet);
+begin
+  // 处理TEXT类型字段显示问题，设置OnGetText事件处理器
+  if qryMerchant.FindField('business_address') <> nil then
+    qryMerchant.FieldByName('business_address').OnGetText := GetText;
+end;
+
+procedure TAdminForm.qryDeliveryAfterPost(DataSet: TDataSet);
+begin
+  TabDeliveryShow(nil);
+end;
+
+procedure TAdminForm.qryDeliveryAfterOpen(DataSet: TDataSet);
+begin
+  // 处理TEXT类型字段显示问题，设置OnGetText事件处理器 
+  // 目前没有TEXT类型字段，如果以后添加就在这里处理
+end;
+
+procedure TAdminForm.qryOrderAfterPost(DataSet: TDataSet);
+begin
+  TabOrderShow(nil);
+end;
+
+procedure TAdminForm.qryOrderAfterOpen(DataSet: TDataSet);
+begin
+  // 处理TEXT类型字段显示问题，设置OnGetText事件处理器
+  // 如果有TEXT类型字段，就在这里处理
+end;
+
+procedure TAdminForm.qryCustomerAfterPost(DataSet: TDataSet);
+begin
+  TabCustomerShow(nil);
+end;
+
+procedure TAdminForm.qryCustomerAfterOpen(DataSet: TDataSet);
+begin
+  // 处理TEXT类型字段显示问题，设置OnGetText事件处理器
+  if qryCustomer.FindField('address') <> nil then
+    qryCustomer.FieldByName('address').OnGetText := GetText;
+end;
+
+procedure TAdminForm.GetText(Sender: TField; var Text: String; DisplayText: Boolean);
+begin
+  Text := Sender.AsString;
 end;
 
 end. 
