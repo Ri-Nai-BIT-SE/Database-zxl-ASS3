@@ -122,7 +122,7 @@ begin
     Exit;
     
   // 设置当前窗体的数据库连接
-  DBConnect.ConnectionString := DM.FDConnection1.ConnectionString;
+  DBConnect.ConnectionString := DM.FDConnection.ConnectionString;
   DBConnect.Connected := True;
   
   // 设置所有查询的连接

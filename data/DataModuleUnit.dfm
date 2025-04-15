@@ -2,7 +2,7 @@ object DataModuleUnit: TDataModuleUnit
   Height = 250
   Width = 438
   PixelsPerInch = 120
-  object FDConnection1: TFDConnection
+  object FDConnection: TFDConnection
     Params.Strings = (
       'User_Name=takeout_admin'
       'Database=db_takeout'
@@ -12,16 +12,6 @@ object DataModuleUnit: TDataModuleUnit
       'DriverID=PG')
     LoginPrompt = False
     Left = 60
-    Top = 30
-  end
-  object FDQueryLogin: TFDQuery
-    Connection = FDConnection1
-    Left = 200
-    Top = 30
-  end
-  object FDQueryRegister: TFDQuery
-    Connection = FDConnection1
-    Left = 320
     Top = 30
   end
 end

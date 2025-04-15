@@ -8,6 +8,11 @@ uses
   Vcl.ComCtrls, // Added for TPageControl, TTabSheet
   Vcl.ExtCtrls, // Added for TPanel
   FireDAC.Stan.Param, // 添加用于 TFDParam.SetAsString
+  FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, 
+  FireDAC.Phys.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool, FireDAC.Stan.Async,
+  FireDAC.Phys, FireDAC.VCLUI.Wait, Data.DB, FireDAC.Comp.Client,
+  DataModuleUnit, // 主数据模块
+  AuthDataModule, // 添加引用认证数据模块
   CustomerForm,
   MerchantForm,
   DeliveryForm,
@@ -72,7 +77,7 @@ type
 
 implementation
 
-uses System.StrUtils, DataModuleUnit;
+uses System.StrUtils;
 
 {$R *.dfm}
 
@@ -129,15 +134,18 @@ begin
 
   // --- 数据库验证逻辑 ---
   try
-    // 获取当前角色类型并连接数据库
+    // 获取当前角色类型
     RoleType := DM.GetRoleTypeFromString(cmbLoginRole.Items[cmbLoginRole.ItemIndex]);
+    
+    // 确保数据库已连接
     if not DM.Connect(RoleType) then
     begin
       MessageDlg('无法连接到数据库，请检查网络连接。', mtError, [mbOK], 0);
       Exit;
     end;
-
-    if DM.VerifyCredentials(SelectedRoleTable, Username, Password) then
+    
+    // 使用认证数据模块验证登录
+    if AuthDM.ValidateLogin(RoleType, Username, Password) then
     begin
       LoginSuccessful := True;
       LoggedInUserRole := cmbLoginRole.Items[cmbLoginRole.ItemIndex]; // Use cmbLoginRole
@@ -228,31 +236,34 @@ end;
 function TLoginForm.CheckUsernameExists(const SelectedRoleTable, Username: string): Boolean;
 var
   SQLCheck: string;
+  Query: TFDQuery;
 begin
   Result := False;
   if (SelectedRoleTable = '') or (Username = '') then 
     Exit;
     
-  // 连接数据库
-  try
+  // 创建临时查询对象
+  Query := TFDQuery.Create(nil);
+  try 
     // 确保使用管理员角色连接（具有查询所有表的权限）
     if not DM.Connect(rtAdmin) then
       Exit;
     
+    Query.Connection := DM.FDConnection;
+    
     // 检查用户名是否已存在
     SQLCheck := Format('SELECT COUNT(*) FROM %s WHERE username = :username', [SelectedRoleTable]);
-    DM.FDQueryRegister.SQL.Text := SQLCheck;
-    DM.FDQueryRegister.Params.ParamByName('username').AsString := Username;
+    Query.SQL.Text := SQLCheck;
+    Query.Params.ParamByName('username').AsString := Username;
     
     try
-      DM.FDQueryRegister.Open();
-      Result := (DM.FDQueryRegister.Fields[0].AsInteger > 0);
+      Query.Open();
+      Result := (Query.Fields[0].AsInteger > 0);
     finally
-      DM.FDQueryRegister.Close; // 关闭检查查询
+      Query.Close;
     end;
-  except
-    // 出错时视为不存在
-    Result := False;
+  finally
+    Query.Free;
   end;
 end;
 
@@ -260,31 +271,34 @@ end;
 function TLoginForm.CheckContactInfoExists(const SelectedRoleTable, ContactInfo: string): Boolean;
 var
   SQLCheck: string;
+  Query: TFDQuery;
 begin
   Result := False;
   if (SelectedRoleTable = '') or (ContactInfo = '') then
     Exit;
     
-  // 连接数据库
+  // 创建临时查询对象
+  Query := TFDQuery.Create(nil);
   try
     // 确保使用管理员角色连接（具有查询所有表的权限）
     if not DM.Connect(rtAdmin) then
       Exit;
     
+    Query.Connection := DM.FDConnection;
+    
     // 检查联系方式是否已存在
     SQLCheck := Format('SELECT COUNT(*) FROM %s WHERE contact_info = :contact_info', [SelectedRoleTable]);
-    DM.FDQueryRegister.SQL.Text := SQLCheck;
-    DM.FDQueryRegister.Params.ParamByName('contact_info').AsString := ContactInfo;
+    Query.SQL.Text := SQLCheck;
+    Query.Params.ParamByName('contact_info').AsString := ContactInfo;
     
     try
-      DM.FDQueryRegister.Open();
-      Result := (DM.FDQueryRegister.Fields[0].AsInteger > 0);
+      Query.Open();
+      Result := (Query.Fields[0].AsInteger > 0);
     finally
-      DM.FDQueryRegister.Close; // 关闭检查查询
+      Query.Close;
     end;
-  except
-    // 出错时视为不存在
-    Result := False;
+  finally
+    Query.Free;
   end;
 end;
 
@@ -340,40 +354,34 @@ end;
 procedure TLoginForm.btnRegisterClick(Sender: TObject);
 var
   SelectedRoleTable: string;
+  RoleType: TRoleType;
   Username, Password, Name, ContactInfo: string;
-  SQLInsert: string;
-  PasswordErrMsg: string;
-  UsernameExists, ContactInfoExists: Boolean;
+  ErrorMsg: string;
+  Address, BusinessAddress: string;
 begin
   SelectedRoleTable := GetSelectedRoleTableName(cmbRegRole);
   Username := edtRegUsername.Text;
   Password := edtRegPassword.Text;
   Name := edtName.Text;
   ContactInfo := edtContactInfo.Text;
-
-  // 1. 输入验证
+  Address := ''; // 这里可以添加地址字段
+  BusinessAddress := ''; // 这里可以添加商家地址字段
+  
+  // 基本输入验证
   if SelectedRoleTable = '' then
   begin
-    MessageDlg('请选择要注册的角色。', mtWarning, [mbOK], 0);
+    MessageDlg('请选择一个角色。', mtWarning, [mbOK], 0);
     cmbRegRole.SetFocus;
     Exit;
   end;
-
+  
   if Username = '' then
   begin
     MessageDlg('用户名不能为空。', mtWarning, [mbOK], 0);
     edtRegUsername.SetFocus;
     Exit;
   end;
-
-  if Length(Username) < 3 then
-  begin
-    lblUsernameHint.Caption := '用户名至少需要3个字符';
-    lblUsernameHint.Font.Color := clRed;
-    edtRegUsername.SetFocus;
-    Exit;
-  end;
-
+  
   if Password = '' then
   begin
     MessageDlg('密码不能为空。', mtWarning, [mbOK], 0);
@@ -381,22 +389,13 @@ begin
     Exit;
   end;
   
-  // 验证密码强度
-  if not ValidatePassword(Password, PasswordErrMsg) then
-  begin
-    MessageDlg(PasswordErrMsg, mtWarning, [mbOK], 0);
-    edtRegPassword.SetFocus;
-    edtRegPassword.SelectAll;
-    Exit;
-  end;
-
   if Name = '' then
   begin
     MessageDlg('姓名不能为空。', mtWarning, [mbOK], 0);
     edtName.SetFocus;
     Exit;
   end;
-
+  
   if ContactInfo = '' then
   begin
     MessageDlg('联系方式不能为空。', mtWarning, [mbOK], 0);
@@ -404,64 +403,50 @@ begin
     Exit;
   end;
   
-  // 2. 数据库操作与判重
-  try
-    // 连接数据库 - 使用管理员角色进行注册操作
-    if not DM.Connect(rtAdmin) then
-    begin
-      MessageDlg('无法连接到数据库，请检查网络连接。', mtError, [mbOK], 0);
-      Exit;
-    end;
-    
-    // 仅在点击注册时进行判重检查
-    UsernameExists := CheckUsernameExists(SelectedRoleTable, Username);
-    if UsernameExists then
-    begin
+  // 密码复杂度验证
+  if not ValidatePassword(Password, ErrorMsg) then
+  begin
+    MessageDlg(ErrorMsg, mtWarning, [mbOK], 0);
+    edtRegPassword.SetFocus;
+    Exit;
+  end;
+  
+  // 检查用户名是否已存在
+  if CheckUsernameExists(SelectedRoleTable, Username) then
+  begin
       lblUsernameHint.Caption := '该用户名已被注册，请选择其他用户名';
       lblUsernameHint.Font.Color := clRed;
-      edtRegUsername.SetFocus;
-      edtRegUsername.SelectAll;
-      Exit;
-    end;
-    
-    ContactInfoExists := CheckContactInfoExists(SelectedRoleTable, ContactInfo);
-    if ContactInfoExists then
-    begin
+    edtRegUsername.SetFocus;
+    Exit;
+  end;
+  
+  // 检查联系方式是否已存在
+  if CheckContactInfoExists(SelectedRoleTable, ContactInfo) then
+  begin
       lblContactInfoHint.Caption := '该联系方式已被注册，请使用其他联系方式';
       lblContactInfoHint.Font.Color := clRed;
-      edtContactInfo.SetFocus;
-      edtContactInfo.SelectAll;
-      Exit;
-    end;
-
-    // 用户名和联系方式不存在，执行插入操作
-    SQLInsert := Format('INSERT INTO %s (username, password_hash, name, contact_info) VALUES (:username, :password_hash, :name, :contact_info)', [SelectedRoleTable]);
-    DM.FDQueryRegister.SQL.Text := SQLInsert;
-    DM.FDQueryRegister.Params.ParamByName('username').AsString := Username;
-    DM.FDQueryRegister.Params.ParamByName('password_hash').AsString := Password; // 使用原始密码 (不安全! 应使用哈希)
-    DM.FDQueryRegister.Params.ParamByName('name').AsString := Name;
-    DM.FDQueryRegister.Params.ParamByName('contact_info').AsString := ContactInfo;
-
-    DM.FDQueryRegister.ExecSQL; // 执行 INSERT 语句
-
-    MessageDlg('注册成功！现在可以在登录页面使用新账户登录。', mtInformation, [mbOK], 0);
-
-    // Clear registration form and switch to login tab
-    edtRegUsername.Text := '';
-    edtRegPassword.Text := '';
-    edtName.Text := '';
-    edtContactInfo.Text := '';
-    cmbRegRole.ItemIndex := -1; // Clear selection
-    pcLoginRegister.ActivePage := tsLogin; // Switch to login tab
-    edtLoginUsername.SetFocus; // Set focus to login username
+    edtContactInfo.SetFocus;
+    Exit;
+  end;
+  
+  // 获取角色类型
+  RoleType := DM.GetRoleTypeFromString(cmbRegRole.Items[cmbRegRole.ItemIndex]);
+  
+  // 使用认证数据模块进行注册
+  if AuthDM.RegisterUser(RoleType, Username, Password, Name, ContactInfo, Address, BusinessAddress) then
+  begin
+    MessageDlg('注册成功！请登录使用您的账户。', mtInformation, [mbOK], 0);
+    // 切换到登录页
+    pcLoginRegister.ActivePage := tsLogin;
+    // 预填充登录字段
+    cmbLoginRole.ItemIndex := cmbRegRole.ItemIndex;
     edtLoginUsername.Text := Username;
-    edtLoginPassword.Text := Password;
-  except
-    on E: Exception do
-    begin
-      MessageDlg('注册过程中发生数据库错误: ' + E.Message, mtError, [mbOK], 0);
-      // 可以在此记录详细错误日志
-    end;
+    edtLoginPassword.Text := '';  // 出于安全考虑，不预填密码
+    edtLoginPassword.SetFocus;
+  end
+  else
+  begin
+    MessageDlg('注册失败，请重试。', mtError, [mbOK], 0);
   end;
 end;
 

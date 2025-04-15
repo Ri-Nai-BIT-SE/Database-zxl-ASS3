@@ -16,9 +16,8 @@ type
     TRoleType = (rtCustomer, rtMerchant, rtDelivery, rtAdmin);
     
     TDataModuleUnit = class(TDataModule)
-    FDConnection1: TFDConnection;
-    FDQueryLogin: TFDQuery;
-    FDQueryRegister: TFDQuery;
+    FDConnection: TFDConnection;
+    DummyFDQueryForRTTI: TFDQuery; // <-- 添加虚拟字段以确保RTTI
     private
         { Private declarations }
         FCurrentRole: TRoleType;
@@ -61,14 +60,14 @@ var
     Username, Password: string;
 begin
     // 设置数据库连接参数
-    FDConnection1.Connected := False;
-    FDConnection1.Params.Clear;
+    FDConnection.Connected := False;
+    FDConnection.Params.Clear;
     
     // 所有角色连接都使用同一数据库
-    FDConnection1.Params.Add('Database=db_takeout');
-    FDConnection1.Params.Add('Server=192.168.202.129');
-    FDConnection1.Params.Add('Port=26000');
-    FDConnection1.Params.Add('DriverID=PG');
+    FDConnection.Params.Add('Database=db_takeout');
+    FDConnection.Params.Add('Server=192.168.202.129');
+    FDConnection.Params.Add('Port=26000');
+    FDConnection.Params.Add('DriverID=PG');
     
     // 根据角色设置用户名和密码
     case Role of
@@ -94,8 +93,8 @@ begin
         end;
     end;
     
-    FDConnection1.Params.Add('User_Name=' + Username);
-    FDConnection1.Params.Add('Password=' + Password);
+    FDConnection.Params.Add('User_Name=' + Username);
+    FDConnection.Params.Add('Password=' + Password);
     
     // 保存当前角色
     FCurrentRole := Role;
@@ -110,8 +109,8 @@ begin
         SetConnectionParams(Role);
         
         // 尝试连接
-        FDConnection1.Connected := True;
-        Result := FDConnection1.Connected;
+        FDConnection.Connected := True;
+        Result := FDConnection.Connected;
     except
         on E: Exception do
         begin
@@ -132,10 +131,10 @@ end;
 procedure TDataModuleUnit.ConnectDefault;
 begin
     // 使用当前设置连接数据库
-    if not FDConnection1.Connected then
+    if not FDConnection.Connected then
     begin
         try
-            FDConnection1.Connected := True;
+            FDConnection.Connected := True;
         except
             on E: Exception do
             begin
@@ -148,10 +147,10 @@ end;
 
 procedure TDataModuleUnit.Disconnect;
 begin
-    if FDConnection1.Connected then
+    if FDConnection.Connected then
     begin
         try
-            FDConnection1.Connected := False;
+            FDConnection.Connected := False;
         except
             on E: Exception do
             begin
@@ -190,25 +189,32 @@ end;
 function TDataModuleUnit.VerifyCredentials(const RoleTable, Username, Password: string): Boolean;
 var
     SQL: string;
+    Query: TFDQuery;
 begin
     Result := False;
     if (RoleTable = '') or (Username = '') or (Password = '') then
         Exit;
 
     // 确保已连接
-    if not FDConnection1.Connected then
-        ConnectDefault; // 使用重命名后的方法
+    if not FDConnection.Connected then
+        ConnectDefault;
 
-    SQL := Format('SELECT COUNT(*) FROM %s WHERE username = :username AND password_hash = :password', [RoleTable]);
-    FDQueryLogin.SQL.Text := SQL;
-    FDQueryLogin.Params.ParamByName('username').AsString := Username;
-    FDQueryLogin.Params.ParamByName('password').AsString := Password; // 应当使用哈希处理
-
+    Query := TFDQuery.Create(nil);
     try
-        FDQueryLogin.Open();
-        Result := (FDQueryLogin.Fields[0].AsInteger > 0);
+        Query.Connection := FDConnection;
+        SQL := Format('SELECT COUNT(*) FROM %s WHERE username = :username AND password_hash = :password', [RoleTable]);
+        Query.SQL.Text := SQL;
+        Query.Params.ParamByName('username').AsString := Username;
+        Query.Params.ParamByName('password').AsString := Password; // 应当使用哈希处理
+
+        try
+            Query.Open();
+            Result := (Query.Fields[0].AsInteger > 0);
+        finally
+            Query.Close;
+        end;
     finally
-        FDQueryLogin.Close;
+        Query.Free;
     end;
 end;
 
