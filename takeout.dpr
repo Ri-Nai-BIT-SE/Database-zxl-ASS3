@@ -2,8 +2,12 @@
 
 uses
   Vcl.Forms,
-  LoginForm in 'LoginForm.pas' {LoginForm},
-  DataModuleUnit in 'DataModuleUnit.pas' {DM: TDataModule};
+  LoginForm in 'forms\auth\LoginForm.pas' {LoginForm},
+  DataModuleUnit in 'data\DataModuleUnit.pas' {DM: TDataModule},
+  CustomerForm in 'forms\customer\CustomerForm.pas' {CustomerForm},
+  MerchantForm in 'forms\merchant\MerchantForm.pas' {MerchantForm},
+  DeliveryForm in 'forms\delivery\DeliveryForm.pas' {DeliveryForm},
+  AdminForm in 'forms\admin\AdminForm.pas' {AdminForm};
 // 新的登录窗体
 
 {$R *.res}
