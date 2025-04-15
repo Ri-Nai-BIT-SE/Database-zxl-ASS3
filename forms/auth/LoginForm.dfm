@@ -38,6 +38,7 @@ object LoginForm: TLoginForm
     ParentFont = False
     Style = tsFlatButtons
     TabOrder = 0
+    StyleElements = [seFont, seClient]
     object tsLogin: TTabSheet
       Margins.Left = 4
       Margins.Top = 4
@@ -105,6 +106,20 @@ object LoginForm: TLoginForm
           Font.Style = []
           ParentFont = False
         end
+        object lblAppTitle: TLabel
+          Left = 200
+          Top = 40
+          Width = 242
+          Height = 37
+          Alignment = taCenter
+          Caption = #39184#21697#37197#36865#31995#32479#30331#24405
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clBlue
+          Font.Height = -27
+          Font.Name = 'Segoe UI'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
         object cmbLoginRole: TComboBox
           Left = 200
           Top = 116
@@ -115,6 +130,13 @@ object LoginForm: TLoginForm
           Margins.Right = 4
           Margins.Bottom = 4
           Style = csDropDownList
+          Color = clWhite
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -20
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
           TabOrder = 0
         end
         object edtLoginUsername: TEdit
@@ -126,6 +148,13 @@ object LoginForm: TLoginForm
           Margins.Top = 4
           Margins.Right = 4
           Margins.Bottom = 4
+          BevelKind = bkFlat
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -20
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
           TabOrder = 1
         end
         object edtLoginPassword: TEdit
@@ -137,6 +166,13 @@ object LoginForm: TLoginForm
           Margins.Top = 4
           Margins.Right = 4
           Margins.Bottom = 4
+          BevelKind = bkFlat
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -20
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
           PasswordChar = '*'
           TabOrder = 2
         end
@@ -152,13 +188,44 @@ object LoginForm: TLoginForm
           Caption = #30331#24405
           Default = True
           Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
+          Font.Color = clWhite
           Font.Height = -22
           Font.Name = 'Segoe UI'
           Font.Style = [fsBold]
           ParentFont = False
           TabOrder = 3
           OnClick = btnLoginClick
+        end
+        object pnlLoginButton: TPanel
+          Left = 200
+          Top = 360
+          Width = 350
+          Height = 60
+          BevelOuter = bvNone
+          Color = clBlue
+          ParentBackground = False
+          TabOrder = 4
+          Visible = False
+          OnClick = btnLoginClick
+          object lblLoginBtn: TLabel
+            Left = 0
+            Top = 0
+            Width = 350
+            Height = 60
+            Align = alClient
+            Alignment = taCenter
+            Caption = #30331#24405
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWhite
+            Font.Height = -22
+            Font.Name = 'Segoe UI'
+            Font.Style = [fsBold]
+            ParentFont = False
+            Layout = tlCenter
+            OnClick = btnLoginClick
+            ExplicitWidth = 44
+            ExplicitHeight = 30
+          end
         end
       end
     end
@@ -303,6 +370,20 @@ object LoginForm: TLoginForm
           Font.Style = []
           ParentFont = False
         end
+        object lblRegisterTitle: TLabel
+          Left = 200
+          Top = 25
+          Width = 242
+          Height = 37
+          Alignment = taCenter
+          Caption = #29992#25143#27880#20876
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clBlue
+          Font.Height = -27
+          Font.Name = 'Segoe UI'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
         object cmbRegRole: TComboBox
           Left = 200
           Top = 76
@@ -313,6 +394,13 @@ object LoginForm: TLoginForm
           Margins.Right = 4
           Margins.Bottom = 4
           Style = csDropDownList
+          Color = clWhite
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -20
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
           TabOrder = 0
         end
         object edtRegUsername: TEdit
@@ -324,6 +412,13 @@ object LoginForm: TLoginForm
           Margins.Top = 4
           Margins.Right = 4
           Margins.Bottom = 4
+          BevelKind = bkFlat
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -20
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
           TabOrder = 1
           OnChange = edtRegUsernameChange
         end
@@ -336,6 +431,13 @@ object LoginForm: TLoginForm
           Margins.Top = 4
           Margins.Right = 4
           Margins.Bottom = 4
+          BevelKind = bkFlat
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -20
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
           PasswordChar = '*'
           TabOrder = 2
           OnChange = edtRegPasswordChange
@@ -349,6 +451,13 @@ object LoginForm: TLoginForm
           Margins.Top = 4
           Margins.Right = 4
           Margins.Bottom = 4
+          BevelKind = bkFlat
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -20
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
           TabOrder = 3
         end
         object edtContactInfo: TEdit
@@ -360,6 +469,13 @@ object LoginForm: TLoginForm
           Margins.Top = 4
           Margins.Right = 4
           Margins.Bottom = 4
+          BevelKind = bkFlat
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -20
+          Font.Name = 'Segoe UI'
+          Font.Style = []
+          ParentFont = False
           TabOrder = 4
           OnChange = edtContactInfoChange
         end
@@ -374,13 +490,44 @@ object LoginForm: TLoginForm
           Margins.Bottom = 4
           Caption = #27880#20876
           Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
+          Font.Color = clWhite
           Font.Height = -22
           Font.Name = 'Segoe UI'
           Font.Style = [fsBold]
           ParentFont = False
           TabOrder = 5
           OnClick = btnRegisterClick
+        end
+        object pnlRegisterButton: TPanel
+          Left = 200
+          Top = 430
+          Width = 350
+          Height = 60
+          BevelOuter = bvNone
+          Color = clBlue
+          ParentBackground = False
+          TabOrder = 6
+          Visible = False
+          OnClick = btnRegisterClick
+          object lblRegisterBtn: TLabel
+            Left = 0
+            Top = 0
+            Width = 350
+            Height = 60
+            Align = alClient
+            Alignment = taCenter
+            Caption = #27880#20876
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWhite
+            Font.Height = -22
+            Font.Name = 'Segoe UI'
+            Font.Style = [fsBold]
+            ParentFont = False
+            Layout = tlCenter
+            OnClick = btnRegisterClick
+            ExplicitWidth = 44
+            ExplicitHeight = 30
+          end
         end
       end
     end

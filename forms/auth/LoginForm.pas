@@ -41,6 +41,12 @@ type
     lblPasswordHint: TLabel;       // 添加密码提示标签
     lblUsernameHint: TLabel;       // 添加用户名提示标签
     lblContactInfoHint: TLabel;    // 添加联系方式提示标签
+    lblAppTitle: TLabel;           // 添加登录页标题
+    lblRegisterTitle: TLabel;      // 添加注册页标题
+    pnlLoginButton: TPanel;        // 添加登录按钮面板
+    lblLoginBtn: TLabel;           // 添加登录按钮标签
+    pnlRegisterButton: TPanel;     // 添加注册按钮面板
+    lblRegisterBtn: TLabel;        // 添加注册按钮标签
     procedure btnLoginClick(Sender: TObject);
     procedure btnRegisterClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -57,6 +63,7 @@ type
     procedure UpdateContactInfoHint(const ContactInfo: string); // 添加更新联系方式提示方法
     function CheckUsernameExists(const SelectedRoleTable, Username: string): Boolean; // 检查用户名是否存在
     function CheckContactInfoExists(const SelectedRoleTable, ContactInfo: string): Boolean; // 检查联系方式是否存在
+    procedure CustomizeFormAppearance; // 自定义表单外观
   public
     { Public declarations }
     LoginSuccessful: Boolean;
@@ -507,6 +514,26 @@ begin
   UpdatePasswordHint(edtRegPassword.Text);
 end;
 
+// 自定义表单外观
+procedure TLoginForm.CustomizeFormAppearance;
+begin
+  // 美化登录按钮
+  btnLogin.Font.Color := clWhite;
+  btnLogin.Color := clBlue;
+  
+  // 美化注册按钮
+  btnRegister.Font.Color := clWhite;
+  btnRegister.Color := clBlue;
+  
+  // 设置输入框样式
+  edtLoginUsername.BevelKind := bkFlat;
+  edtLoginPassword.BevelKind := bkFlat;
+  edtRegUsername.BevelKind := bkFlat;
+  edtRegPassword.BevelKind := bkFlat;
+  edtName.BevelKind := bkFlat;
+  edtContactInfo.BevelKind := bkFlat;
+end;
+
 procedure TLoginForm.FormCreate(Sender: TObject);
 begin
   LoginSuccessful := False;
@@ -538,6 +565,9 @@ begin
   
   lblContactInfoHint.Caption := '请输入联系方式';
   lblContactInfoHint.Font.Color := clGray;
+
+  // 自定义表单外观
+  CustomizeFormAppearance;
 
   // Set initial active page (optional, DFM already sets it)
   pcLoginRegister.ActivePage := tsLogin;
