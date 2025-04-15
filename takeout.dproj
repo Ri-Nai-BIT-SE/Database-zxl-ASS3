@@ -123,8 +123,24 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="LoginForm.pas">
+        <DCCReference Include="forms\auth\LoginForm.pas">
             <Form>LoginForm</Form>
+        </DCCReference>
+        <DCCReference Include="data\DataModuleUnit.pas">
+            <Form>DM</Form>
+            <DesignClass>TDataModule</DesignClass>
+        </DCCReference>
+        <DCCReference Include="forms\customer\CustomerForm.pas">
+            <Form>CustomerForm</Form>
+        </DCCReference>
+        <DCCReference Include="forms\merchant\MerchantForm.pas">
+            <Form>MerchantForm</Form>
+        </DCCReference>
+        <DCCReference Include="forms\delivery\DeliveryForm.pas">
+            <Form>DeliveryForm</Form>
+        </DCCReference>
+        <DCCReference Include="forms\admin\AdminForm.pas">
+            <Form>AdminForm</Form>
         </DCCReference>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>

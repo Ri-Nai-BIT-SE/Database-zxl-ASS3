@@ -12,16 +12,37 @@ uses
     Vcl.Dialogs; // 添加Dialogs单元用于ShowMessage
 
 type
+    // 定义角色类型枚举
+    TRoleType = (rtCustomer, rtMerchant, rtDelivery, rtAdmin);
+    
     TDataModuleUnit = class(TDataModule)
     FDConnection1: TFDConnection;
     FDQueryLogin: TFDQuery;
     FDQueryRegister: TFDQuery;
     private
-    { Private declarations }
+        { Private declarations }
+        FCurrentRole: TRoleType;
+        
+        // 设置不同角色的连接参数
+        procedure SetConnectionParams(const Role: TRoleType);
     public
-    { Public declarations }
-    procedure Connect; // 添加一个连接方法（可选但有用）
-    function VerifyCredentials(const RoleTable, Username, Password: string): Boolean;
+        { Public declarations }
+        // 获取当前连接的角色
+        property CurrentRole: TRoleType read FCurrentRole;
+        
+        // 连接数据库的方法 - 使用枚举类型参数
+        function Connect(const Role: TRoleType = rtAdmin): Boolean; overload;
+        // 连接数据库的方法 - 使用字符串参数（便于从界面直接调用）
+        function Connect(const RoleStr: string = 'admin'): Boolean; overload;
+        // 通用的连接方法（不指定角色，使用当前设置）
+        procedure ConnectDefault; // 重命名以避免歧义
+        // 断开数据库连接
+        procedure Disconnect;
+        // 验证用户凭据
+        function VerifyCredentials(const RoleTable, Username, Password: string): Boolean;
+        // 获取角色表名
+        function GetRoleTableName(const Role: TRoleType): string;
+        function GetRoleTypeFromString(const RoleStr: string): TRoleType;
     end;
 
 var
@@ -35,22 +56,135 @@ implementation
 
 { TDataModuleUnit }
 
-procedure TDataModuleUnit.Connect;
+procedure TDataModuleUnit.SetConnectionParams(const Role: TRoleType);
+var
+    Username, Password: string;
 begin
-    // 尝试连接数据库，如果尚未连接
+    // 设置数据库连接参数
+    FDConnection1.Connected := False;
+    FDConnection1.Params.Clear;
+    
+    // 所有角色连接都使用同一数据库
+    FDConnection1.Params.Add('Database=db_takeout');
+    FDConnection1.Params.Add('Server=192.168.202.129');
+    FDConnection1.Params.Add('Port=26000');
+    FDConnection1.Params.Add('DriverID=PG');
+    
+    // 根据角色设置用户名和密码
+    case Role of
+        rtCustomer:
+        begin
+            Username := 'customer';
+            Password := 'customer@123';
+        end;
+        rtMerchant:
+        begin
+            Username := 'merchant';
+            Password := 'merchant@123';
+        end;
+        rtDelivery:
+        begin
+            Username := 'delivery_man';
+            Password := 'delivery_man@123';
+        end;
+        rtAdmin:
+        begin
+            Username := 'takeout_admin';
+            Password := 'takeout_admin@123';
+        end;
+    end;
+    
+    FDConnection1.Params.Add('User_Name=' + Username);
+    FDConnection1.Params.Add('Password=' + Password);
+    
+    // 保存当前角色
+    FCurrentRole := Role;
+end;
+
+function TDataModuleUnit.Connect(const Role: TRoleType): Boolean;
+begin
+    Result := False;
+    
+    try
+        // 设置连接参数
+        SetConnectionParams(Role);
+        
+        // 尝试连接
+        FDConnection1.Connected := True;
+        Result := FDConnection1.Connected;
+    except
+        on E: Exception do
+        begin
+            ShowMessage('数据库连接失败: ' + E.Message);
+            Result := False;
+        end;
+    end;
+end;
+
+function TDataModuleUnit.Connect(const RoleStr: string): Boolean;
+var
+    Role: TRoleType;
+begin
+    Role := GetRoleTypeFromString(RoleStr);
+    Result := Connect(Role);
+end;
+
+procedure TDataModuleUnit.ConnectDefault;
+begin
+    // 使用当前设置连接数据库
     if not FDConnection1.Connected then
     begin
-    try
-        FDConnection1.Connected := True;
-    except
-      on E: Exception do
-      begin
-        // 在实际应用中，这里应该记录错误或显示更友好的消息
-        ShowMessage('数据库连接失败: ' + E.Message);
-        raise; // 重新抛出异常，让调用者知道失败了
-      end;
+        try
+            FDConnection1.Connected := True;
+        except
+            on E: Exception do
+            begin
+                ShowMessage('数据库连接失败: ' + E.Message);
+                raise; // 重新抛出异常，让调用者知道失败了
+            end;
+        end;
     end;
+end;
+
+procedure TDataModuleUnit.Disconnect;
+begin
+    if FDConnection1.Connected then
+    begin
+        try
+            FDConnection1.Connected := False;
+        except
+            on E: Exception do
+            begin
+                ShowMessage('断开数据库连接失败: ' + E.Message);
+            end;
+        end;
     end;
+end;
+
+function TDataModuleUnit.GetRoleTableName(const Role: TRoleType): string;
+begin
+    case Role of
+        rtCustomer: Result := 'customer';
+        rtMerchant: Result := 'merchant';
+        rtDelivery: Result := 'delivery_man';
+        rtAdmin: Result := 'admin';
+    else
+        Result := '';
+    end;
+end;
+
+function TDataModuleUnit.GetRoleTypeFromString(const RoleStr: string): TRoleType;
+begin
+    if SameText(RoleStr, 'customer') then
+        Result := rtCustomer
+    else if SameText(RoleStr, 'merchant') then
+        Result := rtMerchant
+    else if SameText(RoleStr, 'delivery') then
+        Result := rtDelivery
+    else if SameText(RoleStr, 'admin') then
+        Result := rtAdmin
+    else
+        Result := rtAdmin; // 默认为管理员角色
 end;
 
 function TDataModuleUnit.VerifyCredentials(const RoleTable, Username, Password: string): Boolean;
@@ -60,6 +194,10 @@ begin
     Result := False;
     if (RoleTable = '') or (Username = '') or (Password = '') then
         Exit;
+
+    // 确保已连接
+    if not FDConnection1.Connected then
+        ConnectDefault; // 使用重命名后的方法
 
     SQL := Format('SELECT COUNT(*) FROM %s WHERE username = :username AND password_hash = :password', [RoleTable]);
     FDQueryLogin.SQL.Text := SQL;

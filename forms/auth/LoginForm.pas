@@ -96,6 +96,7 @@ end;
 procedure TLoginForm.btnLoginClick(Sender: TObject);
 var
   SelectedRoleTable: string;
+  RoleType: TRoleType;
   Username, Password: string; // Define Username and Password locally
 begin
   LoginSuccessful := False;
@@ -128,8 +129,13 @@ begin
 
   // --- 数据库验证逻辑 ---
   try
-    // 连接数据库
-    DM.Connect;
+    // 获取当前角色类型并连接数据库
+    RoleType := DM.GetRoleTypeFromString(cmbLoginRole.Items[cmbLoginRole.ItemIndex]);
+    if not DM.Connect(RoleType) then
+    begin
+      MessageDlg('无法连接到数据库，请检查网络连接。', mtError, [mbOK], 0);
+      Exit;
+    end;
 
     if DM.VerifyCredentials(SelectedRoleTable, Username, Password) then
     begin
@@ -144,7 +150,7 @@ begin
       else if LoggedInUserRole = 'delivery' then
         Application.CreateForm(TDeliveryForm, gDeliveryForm)
       else if LoggedInUserRole = 'admin' then
-        Application.CreateForm(TAdminForm, gAdminForm)
+        TAdminForm.ShowAdminForm
       else
       begin
         ShowMessage('未知的用户角色: ' + LoggedInUserRole);
@@ -218,7 +224,7 @@ begin
   Result := True;
 end;
 
-// 检查用户名是否存在的函数
+// 修改用户名是否存在的检查函数
 function TLoginForm.CheckUsernameExists(const SelectedRoleTable, Username: string): Boolean;
 var
   SQLCheck: string;
@@ -229,7 +235,9 @@ begin
     
   // 连接数据库
   try
-    DM.Connect;
+    // 确保使用管理员角色连接（具有查询所有表的权限）
+    if not DM.Connect(rtAdmin) then
+      Exit;
     
     // 检查用户名是否已存在
     SQLCheck := Format('SELECT COUNT(*) FROM %s WHERE username = :username', [SelectedRoleTable]);
@@ -248,7 +256,7 @@ begin
   end;
 end;
 
-// 检查联系方式是否存在的函数
+// 修改联系方式是否存在的检查函数
 function TLoginForm.CheckContactInfoExists(const SelectedRoleTable, ContactInfo: string): Boolean;
 var
   SQLCheck: string;
@@ -259,7 +267,9 @@ begin
     
   // 连接数据库
   try
-    DM.Connect;
+    // 确保使用管理员角色连接（具有查询所有表的权限）
+    if not DM.Connect(rtAdmin) then
+      Exit;
     
     // 检查联系方式是否已存在
     SQLCheck := Format('SELECT COUNT(*) FROM %s WHERE contact_info = :contact_info', [SelectedRoleTable]);
@@ -396,8 +406,12 @@ begin
   
   // 2. 数据库操作与判重
   try
-    // 连接数据库
-    DM.Connect;
+    // 连接数据库 - 使用管理员角色进行注册操作
+    if not DM.Connect(rtAdmin) then
+    begin
+      MessageDlg('无法连接到数据库，请检查网络连接。', mtError, [mbOK], 0);
+      Exit;
+    end;
     
     // 仅在点击注册时进行判重检查
     UsernameExists := CheckUsernameExists(SelectedRoleTable, Username);
