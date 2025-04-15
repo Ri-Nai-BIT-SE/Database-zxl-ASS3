@@ -519,11 +519,9 @@ procedure TLoginForm.CustomizeFormAppearance;
 begin
   // 美化登录按钮
   btnLogin.Font.Color := clWhite;
-  btnLogin.Color := clBlue;
   
   // 美化注册按钮
   btnRegister.Font.Color := clWhite;
-  btnRegister.Color := clBlue;
   
   // 设置输入框样式
   edtLoginUsername.BevelKind := bkFlat;

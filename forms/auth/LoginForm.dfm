@@ -58,7 +58,7 @@ object LoginForm: TLoginForm
         object lblLoginRole: TLabel
           Left = 80
           Top = 120
-          Width = 76
+          Width = 80
           Height = 28
           Margins.Left = 4
           Margins.Top = 4
@@ -75,7 +75,7 @@ object LoginForm: TLoginForm
         object lblLoginUsername: TLabel
           Left = 80
           Top = 200
-          Width = 57
+          Width = 60
           Height = 28
           Margins.Left = 4
           Margins.Top = 4
@@ -92,7 +92,7 @@ object LoginForm: TLoginForm
         object lblLoginPassword: TLabel
           Left = 80
           Top = 280
-          Width = 38
+          Width = 40
           Height = 28
           Margins.Left = 4
           Margins.Top = 4
@@ -109,7 +109,7 @@ object LoginForm: TLoginForm
         object lblAppTitle: TLabel
           Left = 200
           Top = 40
-          Width = 242
+          Width = 232
           Height = 37
           Alignment = taCenter
           Caption = #39184#21697#37197#36865#31995#32479#30331#24405
@@ -210,8 +210,8 @@ object LoginForm: TLoginForm
           object lblLoginBtn: TLabel
             Left = 0
             Top = 0
-            Width = 350
-            Height = 60
+            Width = 48
+            Height = 30
             Align = alClient
             Alignment = taCenter
             Caption = #30331#24405
@@ -223,8 +223,6 @@ object LoginForm: TLoginForm
             ParentFont = False
             Layout = tlCenter
             OnClick = btnLoginClick
-            ExplicitWidth = 44
-            ExplicitHeight = 30
           end
         end
       end
@@ -249,7 +247,7 @@ object LoginForm: TLoginForm
         object lblRegRole: TLabel
           Left = 80
           Top = 80
-          Width = 76
+          Width = 80
           Height = 28
           Margins.Left = 4
           Margins.Top = 4
@@ -266,7 +264,7 @@ object LoginForm: TLoginForm
         object lblRegUsername: TLabel
           Left = 80
           Top = 150
-          Width = 57
+          Width = 60
           Height = 28
           Margins.Left = 4
           Margins.Top = 4
@@ -283,7 +281,7 @@ object LoginForm: TLoginForm
         object lblRegPassword: TLabel
           Left = 80
           Top = 220
-          Width = 38
+          Width = 40
           Height = 28
           Margins.Left = 4
           Margins.Top = 4
@@ -300,7 +298,7 @@ object LoginForm: TLoginForm
         object lblName: TLabel
           Left = 80
           Top = 290
-          Width = 38
+          Width = 40
           Height = 28
           Margins.Left = 4
           Margins.Top = 4
@@ -317,7 +315,7 @@ object LoginForm: TLoginForm
         object lblContactInfo: TLabel
           Left = 80
           Top = 360
-          Width = 76
+          Width = 80
           Height = 28
           Margins.Left = 4
           Margins.Top = 4
@@ -334,8 +332,8 @@ object LoginForm: TLoginForm
         object lblPasswordHint: TLabel
           Left = 200
           Top = 255
-          Width = 350
-          Height = 21
+          Width = 80
+          Height = 20
           Caption = #35831#36755#20837#23494#30721
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clGray
@@ -347,8 +345,8 @@ object LoginForm: TLoginForm
         object lblUsernameHint: TLabel
           Left = 200
           Top = 185
-          Width = 350
-          Height = 21
+          Width = 96
+          Height = 20
           Caption = #35831#36755#20837#29992#25143#21517
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clGray
@@ -360,8 +358,8 @@ object LoginForm: TLoginForm
         object lblContactInfoHint: TLabel
           Left = 200
           Top = 395
-          Width = 350
-          Height = 21
+          Width = 112
+          Height = 20
           Caption = #35831#36755#20837#32852#31995#26041#24335
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clGray
@@ -373,7 +371,7 @@ object LoginForm: TLoginForm
         object lblRegisterTitle: TLabel
           Left = 200
           Top = 25
-          Width = 242
+          Width = 116
           Height = 37
           Alignment = taCenter
           Caption = #29992#25143#27880#20876
@@ -512,8 +510,8 @@ object LoginForm: TLoginForm
           object lblRegisterBtn: TLabel
             Left = 0
             Top = 0
-            Width = 350
-            Height = 60
+            Width = 48
+            Height = 30
             Align = alClient
             Alignment = taCenter
             Caption = #27880#20876
@@ -525,8 +523,6 @@ object LoginForm: TLoginForm
             ParentFont = False
             Layout = tlCenter
             OnClick = btnRegisterClick
-            ExplicitWidth = 44
-            ExplicitHeight = 30
           end
         end
       end
