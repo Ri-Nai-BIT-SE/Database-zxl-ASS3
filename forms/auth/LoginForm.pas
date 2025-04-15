@@ -7,10 +7,10 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, System.UITypes,
   Vcl.ComCtrls, // Added for TPageControl, TTabSheet
   FireDAC.Stan.Param, // 添加用于 TFDParam.SetAsString
-  CustomerForm in '..\..\forms\customer\CustomerForm.pas',
-  MerchantForm in '..\..\forms\merchant\MerchantForm.pas',
-  DeliveryForm in '..\..\forms\delivery\DeliveryForm.pas',
-  AdminForm in '..\..\forms\admin\AdminForm.pas';
+  CustomerForm,
+  MerchantForm,
+  DeliveryForm,
+  AdminForm;
 
 type
   TLoginForm = class(TForm)
@@ -50,7 +50,7 @@ type
 
 implementation
 
-uses System.StrUtils, DataModuleUnit in '..\..\data\DataModuleUnit.pas'; // 添加DataModuleUnit
+uses System.StrUtils, DataModuleUnit;
 
 {$R *.dfm}
 
