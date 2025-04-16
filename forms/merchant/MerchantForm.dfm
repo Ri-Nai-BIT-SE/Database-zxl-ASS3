@@ -32,8 +32,6 @@ object MerchantForm: TMerchantForm
     Align = alClient
     TabOrder = 0
     TabWidth = 270
-    ExplicitWidth = 1511
-    ExplicitHeight = 885
     object TabAccount: TTabSheet
       Margins.Left = 5
       Margins.Top = 5
@@ -44,8 +42,8 @@ object MerchantForm: TMerchantForm
       object pnlMerchantInfo: TPanel
         Left = 0
         Top = 0
-        Width = 1499
-        Height = 835
+        Width = 1507
+        Height = 848
         Margins.Left = 5
         Margins.Top = 5
         Margins.Right = 5
@@ -53,8 +51,6 @@ object MerchantForm: TMerchantForm
         Align = alClient
         BevelOuter = bvNone
         TabOrder = 0
-        ExplicitWidth = 1495
-        ExplicitHeight = 820
         object lblMerchantInfoTitle: TLabel
           Left = 15
           Top = 15
@@ -164,8 +160,8 @@ object MerchantForm: TMerchantForm
       object pnlProductManagement: TPanel
         Left = 0
         Top = 0
-        Width = 1499
-        Height = 835
+        Width = 1507
+        Height = 848
         Margins.Left = 5
         Margins.Top = 5
         Margins.Right = 5
@@ -349,8 +345,8 @@ object MerchantForm: TMerchantForm
       object pnlOrders: TPanel
         Left = 0
         Top = 0
-        Width = 1499
-        Height = 835
+        Width = 1507
+        Height = 848
         Margins.Left = 5
         Margins.Top = 5
         Margins.Right = 5
@@ -432,8 +428,8 @@ object MerchantForm: TMerchantForm
       object pnlRevenue: TPanel
         Left = 0
         Top = 0
-        Width = 1499
-        Height = 835
+        Width = 1507
+        Height = 848
         Margins.Left = 5
         Margins.Top = 5
         Margins.Right = 5
@@ -441,40 +437,6 @@ object MerchantForm: TMerchantForm
         Align = alClient
         BevelOuter = bvNone
         TabOrder = 0
-        object lblRevenueTitle: TLabel
-          Left = 15
-          Top = 148
-          Width = 216
-          Height = 45
-          Margins.Left = 5
-          Margins.Top = 5
-          Margins.Right = 5
-          Margins.Bottom = 5
-          Caption = #21830#23478#24635#33829#19994#39069
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -33
-          Font.Name = 'Segoe UI'
-          Font.Style = [fsBold]
-          ParentFont = False
-        end
-        object lblRevenueValue: TLabel
-          Left = 312
-          Top = 136
-          Width = 87
-          Height = 60
-          Margins.Left = 5
-          Margins.Top = 5
-          Margins.Right = 5
-          Margins.Bottom = 5
-          Caption = '0.00'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clBlue
-          Font.Height = -44
-          Font.Name = 'Segoe UI'
-          Font.Style = [fsBold]
-          ParentFont = False
-        end
         object gboxDateRange: TGroupBox
           Left = 15
           Top = 0
@@ -546,6 +508,98 @@ object MerchantForm: TMerchantForm
             Caption = #29983#25104#32479#35745
             TabOrder = 2
             OnClick = btnGenerateStatsClick
+          end
+        end
+        object pnlRevenueStats: TPanel
+          Left = 15
+          Top = 130
+          Width = 600
+          Height = 120
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          BevelOuter = bvLowered
+          TabOrder = 1
+          object lblRevenueValuePanel: TLabel
+            Left = 15
+            Top = 65
+            Width = 87
+            Height = 60
+            Margins.Left = 5
+            Margins.Top = 5
+            Margins.Right = 5
+            Margins.Bottom = 5
+            Caption = '0.00'
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clBlue
+            Font.Height = -44
+            Font.Name = 'Segoe UI'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object lblTotalRevenue: TLabel
+            Left = 15
+            Top = 15
+            Width = 245
+            Height = 45
+            Margins.Left = 5
+            Margins.Top = 5
+            Margins.Right = 5
+            Margins.Bottom = 5
+            Caption = #21830#23478#24635#33829#19994#39069#65306
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -33
+            Font.Name = 'Segoe UI'
+            Font.Style = []
+            ParentFont = False
+          end
+        end
+        object pnlOrderStats: TPanel
+          Left = 642
+          Top = 130
+          Width = 600
+          Height = 120
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          BevelOuter = bvLowered
+          TabOrder = 2
+          object lblTotalOrders: TLabel
+            Left = 15
+            Top = 10
+            Width = 210
+            Height = 45
+            Margins.Left = 5
+            Margins.Top = 5
+            Margins.Right = 5
+            Margins.Bottom = 5
+            Caption = #24635#35746#21333#25968#37327#65306
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -33
+            Font.Name = 'Segoe UI'
+            Font.Style = []
+            ParentFont = False
+          end
+          object lblOrdersValue: TLabel
+            Left = 15
+            Top = 65
+            Width = 25
+            Height = 60
+            Margins.Left = 5
+            Margins.Top = 5
+            Margins.Right = 5
+            Margins.Bottom = 5
+            Caption = '0'
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clGreen
+            Font.Height = -44
+            Font.Name = 'Segoe UI'
+            Font.Style = [fsBold]
+            ParentFont = False
           end
         end
       end

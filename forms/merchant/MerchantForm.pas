@@ -43,7 +43,6 @@ type
     qryOrders: TFDQuery;
     btnConfirmOrder: TButton;
     btnConfirmDelivery: TButton;
-    lblRevenueValue: TLabel;
     // 添加缺失的查询组件
     qryProducts: TFDQuery;
     qryAddProduct: TFDQuery;
@@ -63,7 +62,6 @@ type
     lblMerchantInfoTitle: TLabel;
     lblProductManagementTitle: TLabel;
     lblOrdersTitle: TLabel;
-    lblRevenueTitle: TLabel;
     // -- TabAccount --
     lblName: TLabel;
     edtName: TEdit;
@@ -79,6 +77,13 @@ type
     dtpStartDate: TDateTimePicker;
     dtpEndDate: TDateTimePicker;
     btnGenerateStats: TButton;
+    // -- 新增统计面板组件 --
+    pnlRevenueStats: TPanel;
+    lblRevenueValuePanel: TLabel;
+    pnlOrderStats: TPanel;
+    lblTotalOrders: TLabel;
+    lblOrdersValue: TLabel;
+    lblTotalRevenue: TLabel;
     
     procedure FormCreate(Sender: TObject);
     procedure btnAddProductClick(Sender: TObject);
@@ -323,12 +328,14 @@ end;
 procedure TMerchantForm.CalculateMerchantRevenue;
 var
   TotalRevenue: Double;
+  TotalOrders: Integer;
   StartDate, EndDate: TDateTime;
   SQL: string;
 begin
   StartDate := dtpStartDate.Date;
   EndDate := dtpEndDate.Date;
 
+  // 计算总收入
   qryRevenue.Close;
   // 使用v_order_details视图简化收益计算查询，并增加日期筛选
   SQL := 'SELECT COALESCE(SUM(total_amount), 0) as total_revenue ' +
@@ -345,6 +352,24 @@ begin
   
   TotalRevenue := qryRevenue.FieldByName('total_revenue').AsFloat;
   lblRevenueValue.Caption := FormatFloat('#,##0.00', TotalRevenue) + ' 元';
+  lblRevenueValuePanel.Caption := FormatFloat('#,##0.00', TotalRevenue) + ' 元';
+  
+  // 计算总订单数量
+  qryRevenue.Close;
+  SQL := 'SELECT COUNT(*) as total_orders ' +
+         'FROM v_order_details ' +
+         'WHERE merchant_id = :merchant_id ' +
+         'AND created_at >= :start_date ' +
+         'AND created_at <= :end_date';
+         
+  qryRevenue.SQL.Text := SQL;
+  qryRevenue.ParamByName('merchant_id').AsInteger := FMerchantID;
+  qryRevenue.ParamByName('start_date').AsDate := StartDate;
+  qryRevenue.ParamByName('end_date').AsDate := EndDate + 1;  // 加1天以包含结束日期当天
+  qryRevenue.Open;
+  
+  TotalOrders := qryRevenue.FieldByName('total_orders').AsInteger;
+  lblOrdersValue.Caption := IntToStr(TotalOrders) + ' 单';
 end;
 procedure TMerchantForm.FormShow(Sender: TObject);
 begin
