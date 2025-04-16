@@ -1,188 +1,337 @@
-﻿object MerchantForm: TMerchantForm
+object MerchantForm: TMerchantForm
   Left = 0
   Top = 0
-  Caption = '商家管理系统'
-  ClientHeight = 800
-  ClientWidth = 1000
+  Margins.Left = 5
+  Margins.Top = 5
+  Margins.Right = 5
+  Margins.Bottom = 5
+  Caption = #21830#23478#31649#29702#31995#32479
+  ClientHeight = 900
+  ClientWidth = 1515
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
-  Font.Height = -18
+  Font.Height = -27
   Font.Name = 'Segoe UI'
   Font.Style = []
   Position = poScreenCenter
   OnCreate = FormCreate
   OnShow = FormShow
-  PixelsPerInch = 96
-  TextHeight = 20
+  PixelsPerInch = 144
+  TextHeight = 37
   object PageControl: TPageControl
     Left = 0
     Top = 0
-    Width = 1000
-    Height = 800
-    ActivePage = TabAccount
+    Width = 1515
+    Height = 900
+    Margins.Left = 5
+    Margins.Top = 5
+    Margins.Right = 5
+    Margins.Bottom = 5
+    ActivePage = TabRevenue
     Align = alClient
     TabOrder = 0
-    TabWidth = 180
+    TabWidth = 270
+    ExplicitWidth = 1511
+    ExplicitHeight = 885
     object TabAccount: TTabSheet
-      Caption = '商家账户管理'
+      Margins.Left = 5
+      Margins.Top = 5
+      Margins.Right = 5
+      Margins.Bottom = 5
+      Caption = #21830#23478#36134#25143#31649#29702
       OnShow = TabAccountShow
       object pnlMerchantInfo: TPanel
         Left = 0
         Top = 0
-        Width = 992
-        Height = 762
+        Width = 1499
+        Height = 835
+        Margins.Left = 5
+        Margins.Top = 5
+        Margins.Right = 5
+        Margins.Bottom = 5
         Align = alClient
         BevelOuter = bvNone
         TabOrder = 0
+        ExplicitWidth = 1495
+        ExplicitHeight = 820
         object lblMerchantInfoTitle: TLabel
-          Left = 10
-          Top = 10
-          Width = 200
-          Height = 30
-          Caption = '商家账户管理'
+          Left = 15
+          Top = 15
+          Width = 216
+          Height = 45
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          Caption = #21830#23478#36134#25143#20449#24687
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -22
+          Font.Height = -33
           Font.Name = 'Segoe UI'
           Font.Style = [fsBold]
           ParentFont = False
         end
-        object gridMerchantInfo: TDBGrid
-          Left = 10
-          Top = 50
-          Width = 972
-          Height = 702
-          DataSource = dsMerchantInfo
-          Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack, dgEditing]
+        object lblName: TLabel
+          Left = 15
+          Top = 90
+          Width = 112
+          Height = 37
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          Caption = #21830#23478#21517#31216
+        end
+        object lblContact: TLabel
+          Left = 15
+          Top = 150
+          Width = 112
+          Height = 37
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          Caption = #32852#31995#20449#24687
+        end
+        object lblAddress: TLabel
+          Left = 15
+          Top = 210
+          Width = 112
+          Height = 37
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          Caption = #32463#33829#22320#22336
+        end
+        object edtName: TEdit
+          Left = 180
+          Top = 83
+          Width = 450
+          Height = 45
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
           TabOrder = 0
-          TitleFont.Charset = DEFAULT_CHARSET
-          TitleFont.Color = clWindowText
-          TitleFont.Height = -18
-          TitleFont.Name = 'Segoe UI'
-          TitleFont.Style = []
+        end
+        object edtContactInfo: TEdit
+          Left = 180
+          Top = 143
+          Width = 450
+          Height = 45
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          TabOrder = 1
+        end
+        object edtBusinessAddress: TEdit
+          Left = 180
+          Top = 203
+          Width = 750
+          Height = 45
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          TabOrder = 2
+        end
+        object btnUpdateMerchantInfo: TButton
+          Left = 180
+          Top = 270
+          Width = 225
+          Height = 51
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          Caption = #26356#26032#20449#24687
+          TabOrder = 3
+          OnClick = btnUpdateMerchantInfoClick
         end
       end
     end
     object TabProduct: TTabSheet
-      Caption = '商品管理'
+      Margins.Left = 5
+      Margins.Top = 5
+      Margins.Right = 5
+      Margins.Bottom = 5
+      Caption = #21830#21697#31649#29702
       ImageIndex = 1
       OnShow = TabProductShow
       object pnlProductManagement: TPanel
         Left = 0
         Top = 0
-        Width = 992
-        Height = 762
+        Width = 1499
+        Height = 835
+        Margins.Left = 5
+        Margins.Top = 5
+        Margins.Right = 5
+        Margins.Bottom = 5
         Align = alClient
         BevelOuter = bvNone
         TabOrder = 0
         object lblProductManagementTitle: TLabel
-          Left = 10
-          Top = 10
-          Width = 200
-          Height = 30
-          Caption = '商品管理'
+          Left = 15
+          Top = 15
+          Width = 144
+          Height = 45
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          Caption = #21830#21697#31649#29702
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -22
+          Font.Height = -33
           Font.Name = 'Segoe UI'
           Font.Style = [fsBold]
           ParentFont = False
         end
         object lblProductName: TLabel
-          Left = 10
-          Top = 50
-          Width = 80
-          Height = 25
-          Caption = '商品名称'
+          Left = 15
+          Top = 75
+          Width = 112
+          Height = 37
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          Caption = #21830#21697#21517#31216
         end
         object lblProductPrice: TLabel
-          Left = 320
-          Top = 50
-          Width = 80
-          Height = 25
-          Caption = '商品价格'
+          Left = 480
+          Top = 75
+          Width = 112
+          Height = 37
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          Caption = #21830#21697#20215#26684
         end
         object lblProductStock: TLabel
-          Left = 520
-          Top = 50
-          Width = 80
-          Height = 25
-          Caption = '商品库存'
+          Left = 780
+          Top = 75
+          Width = 112
+          Height = 37
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          Caption = #21830#21697#24211#23384
         end
         object lblProductDescription: TLabel
-          Left = 10
-          Top = 90
-          Width = 100
-          Height = 25
-          Caption = '商品描述'
+          Left = 15
+          Top = 135
+          Width = 112
+          Height = 37
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          Caption = #21830#21697#25551#36848
         end
         object edtProductName: TEdit
-          Left = 100
-          Top = 45
-          Width = 200
-          Height = 30
+          Left = 150
+          Top = 68
+          Width = 300
+          Height = 45
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
           TabOrder = 0
         end
         object edtProductPrice: TEdit
-          Left = 400
-          Top = 45
-          Width = 100
-          Height = 30
+          Left = 600
+          Top = 68
+          Width = 150
+          Height = 45
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
           TabOrder = 1
         end
         object edtProductStock: TEdit
-          Left = 600
-          Top = 45
-          Width = 100
-          Height = 30
+          Left = 900
+          Top = 68
+          Width = 150
+          Height = 45
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
           TabOrder = 2
         end
         object mmoProductDescription: TMemo
-          Left = 10
-          Top = 120
-          Width = 400
-          Height = 100
+          Left = 15
+          Top = 180
+          Width = 600
+          Height = 150
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
           TabOrder = 3
         end
         object btnAddProduct: TButton
-          Left = 420
-          Top = 120
-          Width = 120
-          Height = 34
-          Caption = '添加商品'
+          Left = 630
+          Top = 180
+          Width = 180
+          Height = 51
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          Caption = #28155#21152#21830#21697
           TabOrder = 4
           OnClick = btnAddProductClick
         end
         object btnUpdateProduct: TButton
-          Left = 560
-          Top = 120
-          Width = 120
-          Height = 34
-          Caption = '更新商品'
+          Left = 840
+          Top = 180
+          Width = 180
+          Height = 51
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          Caption = #26356#26032#21830#21697
           TabOrder = 5
           OnClick = btnUpdateProductClick
         end
         object btnDeleteProduct: TButton
-          Left = 700
-          Top = 120
-          Width = 120
-          Height = 34
-          Caption = '删除商品'
+          Left = 1050
+          Top = 180
+          Width = 180
+          Height = 51
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          Caption = #21024#38500#21830#21697
           TabOrder = 6
           OnClick = btnDeleteProductClick
         end
         object gridProducts: TDBGrid
-          Left = 10
-          Top = 240
-          Width = 972
-          Height = 510
+          Left = 15
+          Top = 360
+          Width = 1458
+          Height = 465
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
           DataSource = dsProducts
           Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
           TabOrder = 7
           TitleFont.Charset = DEFAULT_CHARSET
           TitleFont.Color = clWindowText
-          TitleFont.Height = -18
+          TitleFont.Height = -27
           TitleFont.Name = 'Segoe UI'
           TitleFont.Style = []
           OnCellClick = gridProductsCellClick
@@ -190,102 +339,214 @@
       end
     end
     object TabOrder: TTabSheet
-      Caption = '订单管理'
+      Margins.Left = 5
+      Margins.Top = 5
+      Margins.Right = 5
+      Margins.Bottom = 5
+      Caption = #35746#21333#31649#29702
       ImageIndex = 2
       OnShow = TabOrderShow
       object pnlOrders: TPanel
         Left = 0
         Top = 0
-        Width = 992
-        Height = 762
+        Width = 1499
+        Height = 835
+        Margins.Left = 5
+        Margins.Top = 5
+        Margins.Right = 5
+        Margins.Bottom = 5
         Align = alClient
         BevelOuter = bvNone
         TabOrder = 0
         object lblOrdersTitle: TLabel
-          Left = 10
-          Top = 10
-          Width = 120
-          Height = 30
-          Caption = '订单管理'
+          Left = 15
+          Top = 15
+          Width = 144
+          Height = 45
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          Caption = #35746#21333#31649#29702
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -22
+          Font.Height = -33
           Font.Name = 'Segoe UI'
           Font.Style = [fsBold]
           ParentFont = False
         end
         object gridOrders: TDBGrid
-          Left = 10
-          Top = 50
-          Width = 972
-          Height = 660
+          Left = 15
+          Top = 75
+          Width = 1458
+          Height = 690
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
           DataSource = dsOrders
-          Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack, dgEditing]
           TabOrder = 0
           TitleFont.Charset = DEFAULT_CHARSET
           TitleFont.Color = clWindowText
-          TitleFont.Height = -18
+          TitleFont.Height = -27
           TitleFont.Name = 'Segoe UI'
           TitleFont.Style = []
           OnCellClick = gridOrdersCellClick
         end
         object btnConfirmOrder: TButton
-          Left = 10
-          Top = 720
-          Width = 120
-          Height = 34
-          Caption = '确认订单'
+          Left = 15
+          Top = 780
+          Width = 180
+          Height = 51
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          Caption = #30830#35748#35746#21333
           TabOrder = 1
           OnClick = btnConfirmOrderClick
         end
         object btnConfirmDelivery: TButton
-          Left = 140
-          Top = 720
-          Width = 150
-          Height = 34
-          Caption = '确认发货'
+          Left = 210
+          Top = 780
+          Width = 225
+          Height = 51
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          Caption = #30830#35748#21457#36135
           TabOrder = 2
           OnClick = btnConfirmDeliveryClick
         end
       end
     end
     object TabRevenue: TTabSheet
-      Caption = '营业额统计'
+      Margins.Left = 5
+      Margins.Top = 5
+      Margins.Right = 5
+      Margins.Bottom = 5
+      Caption = #33829#19994#39069#32479#35745
       ImageIndex = 3
       OnShow = TabRevenueShow
       object pnlRevenue: TPanel
         Left = 0
         Top = 0
-        Width = 992
-        Height = 762
+        Width = 1499
+        Height = 835
+        Margins.Left = 5
+        Margins.Top = 5
+        Margins.Right = 5
+        Margins.Bottom = 5
         Align = alClient
         BevelOuter = bvNone
         TabOrder = 0
         object lblRevenueTitle: TLabel
-          Left = 10
-          Top = 10
-          Width = 180
-          Height = 30
-          Caption = '商家总营业额'
+          Left = 15
+          Top = 148
+          Width = 216
+          Height = 45
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          Caption = #21830#23478#24635#33829#19994#39069
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -22
+          Font.Height = -33
           Font.Name = 'Segoe UI'
           Font.Style = [fsBold]
           ParentFont = False
         end
         object lblRevenueValue: TLabel
-          Left = 200
-          Top = 10
-          Width = 100
-          Height = 40
+          Left = 312
+          Top = 136
+          Width = 87
+          Height = 60
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
           Caption = '0.00'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clBlue
-          Font.Height = -29
+          Font.Height = -44
           Font.Name = 'Segoe UI'
           Font.Style = [fsBold]
           ParentFont = False
+        end
+        object gboxDateRange: TGroupBox
+          Left = 15
+          Top = 0
+          Width = 900
+          Height = 120
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          Caption = #26085#26399#33539#22260
+          TabOrder = 0
+          object lblStartDate: TLabel
+            Left = 30
+            Top = 45
+            Width = 112
+            Height = 37
+            Margins.Left = 5
+            Margins.Top = 5
+            Margins.Right = 5
+            Margins.Bottom = 5
+            Caption = #24320#22987#26085#26399
+          end
+          object lblEndDate: TLabel
+            Left = 360
+            Top = 45
+            Width = 112
+            Height = 37
+            Margins.Left = 5
+            Margins.Top = 5
+            Margins.Right = 5
+            Margins.Bottom = 5
+            Caption = #32467#26463#26085#26399
+          end
+          object dtpStartDate: TDateTimePicker
+            Left = 152
+            Top = 45
+            Width = 195
+            Height = 45
+            Margins.Left = 5
+            Margins.Top = 5
+            Margins.Right = 5
+            Margins.Bottom = 5
+            Date = 45000.000000000000000000
+            Time = 45000.000000000000000000
+            TabOrder = 0
+          end
+          object dtpEndDate: TDateTimePicker
+            Left = 482
+            Top = 45
+            Width = 195
+            Height = 45
+            Margins.Left = 5
+            Margins.Top = 5
+            Margins.Right = 5
+            Margins.Bottom = 5
+            Date = 45000.000000000000000000
+            Time = 45000.000000000000000000
+            TabOrder = 1
+          end
+          object btnGenerateStats: TButton
+            Left = 690
+            Top = 45
+            Width = 180
+            Height = 42
+            Margins.Left = 5
+            Margins.Top = 5
+            Margins.Right = 5
+            Margins.Bottom = 5
+            Caption = #29983#25104#32479#35745
+            TabOrder = 2
+            OnClick = btnGenerateStatsClick
+          end
         end
       end
     end
@@ -340,5 +601,9 @@
   object qryRevenue: TFDQuery
     Left = 500
     Top = 220
+  end
+  object qryUpdateMerchantInfo: TFDQuery
+    Left = 800
+    Top = 40
   end
 end

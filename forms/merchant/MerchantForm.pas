@@ -18,13 +18,12 @@ type
     TabProduct: TTabSheet;
     TabOrder: TTabSheet;
     TabRevenue: TTabSheet;
-    
-    // 商家信息显示网格
-    gridMerchantInfo: TDBGrid;
     // 商家信息数据源
     dsMerchantInfo: TDataSource;
     // 商家信息查询组件
     qryMerchantInfo: TFDQuery;
+    // 商家信息更新查询组件
+    qryUpdateMerchantInfo: TFDQuery;
     // 商品管理相关组件
     pnlProductManagement: TPanel;
     lblProductName: TLabel;
@@ -44,8 +43,6 @@ type
     qryOrders: TFDQuery;
     btnConfirmOrder: TButton;
     btnConfirmDelivery: TButton;
-    // 收益查看相关组件
-    lblMerchantRevenue: TLabel;
     lblRevenueValue: TLabel;
     // 添加缺失的查询组件
     qryProducts: TFDQuery;
@@ -67,6 +64,21 @@ type
     lblProductManagementTitle: TLabel;
     lblOrdersTitle: TLabel;
     lblRevenueTitle: TLabel;
+    // -- TabAccount --
+    lblName: TLabel;
+    edtName: TEdit;
+    lblContact: TLabel;
+    edtContactInfo: TEdit;
+    lblAddress: TLabel;
+    edtBusinessAddress: TEdit;
+    btnUpdateMerchantInfo: TButton;
+    // -- 新增日期筛选组件 --
+    gboxDateRange: TGroupBox;
+    lblStartDate: TLabel;
+    lblEndDate: TLabel;
+    dtpStartDate: TDateTimePicker;
+    dtpEndDate: TDateTimePicker;
+    btnGenerateStats: TButton;
     
     procedure FormCreate(Sender: TObject);
     procedure btnAddProductClick(Sender: TObject);
@@ -81,6 +93,8 @@ type
     procedure TabProductShow(Sender: TObject);
     procedure TabOrderShow(Sender: TObject);
     procedure TabRevenueShow(Sender: TObject);
+    procedure btnUpdateMerchantInfoClick(Sender: TObject);
+    procedure btnGenerateStatsClick(Sender: TObject);
   private
     FMerchantID: Integer; // 添加商家ID字段
     selectedProductID: Integer; // 添加选中的商品ID
@@ -91,6 +105,7 @@ type
     procedure LoadOrders;
     procedure CalculateMerchantRevenue;
     procedure AdjustGridColumnWidths(AGrid: TDBGrid; const AColumnWidths: TDictionary<string, Integer>);
+    procedure GetText(Sender: TField; var Text: String; DisplayText: Boolean);
   public
     property CurrentMerchantID: Integer read FMerchantID write FMerchantID;
     class procedure ShowMerchantForm(MerchantID: Integer);
@@ -103,6 +118,12 @@ implementation
 
 uses
   DataModuleUnit;
+
+procedure TMerchantForm.GetText(Sender: TField; var Text: String; DisplayText: Boolean);
+begin
+  Text := Sender.AsString;
+end;
+
 procedure TMerchantForm.ConnectToDatabase;
 begin
   // 确保数据模块已连接
@@ -110,6 +131,7 @@ begin
     Exit;
   // 设置查询组件的连接
   qryMerchantInfo.Connection := DM.FDConnection;
+  qryUpdateMerchantInfo.Connection := DM.FDConnection;
   qryOrders.Connection := DM.FDConnection;
   
   // 为新增的查询组件设置连接
@@ -122,40 +144,54 @@ begin
   qryRevenue.Connection := DM.FDConnection;
 end;
 procedure TMerchantForm.LoadMerchantInfo;
-var
-  MerchantInfoWidths: TDictionary<string, Integer>;
 begin
   qryMerchantInfo.Close;
-  qryMerchantInfo.SQL.Text := 'SELECT username, name, contact_info, business_address, status FROM merchant WHERE merchant_id = :merchant_id';
-  qryMerchantInfo.ParamByName('merchant_id').AsInteger := FMerchantID; // 使用字段
+  qryMerchantInfo.SQL.Text := 'SELECT name, contact_info, business_address FROM merchant WHERE merchant_id = :merchant_id';
+  qryMerchantInfo.ParamByName('merchant_id').AsInteger := FMerchantID;
   qryMerchantInfo.Open;
-  
-  // 调整列宽度
-  if qryMerchantInfo.Active then
+
+  // 将数据显示到编辑框
+  if qryMerchantInfo.RecordCount > 0 then
   begin
-    MerchantInfoWidths := TDictionary<string, Integer>.Create;
-    try
-      // 定义商家信息网格列宽
-      MerchantInfoWidths.AddOrSetValue('username', 120);
-      MerchantInfoWidths.AddOrSetValue('name', 150);
-      MerchantInfoWidths.AddOrSetValue('contact_info', 180);
-      MerchantInfoWidths.AddOrSetValue('business_address', 220);
-      MerchantInfoWidths.AddOrSetValue('status', 80);
-      
-      AdjustGridColumnWidths(gridMerchantInfo, MerchantInfoWidths);
-    finally
-      MerchantInfoWidths.Free;
-    end;
+    edtName.Text := qryMerchantInfo.FieldByName('name').AsString;
+    edtContactInfo.Text := qryMerchantInfo.FieldByName('contact_info').AsString;
+    edtBusinessAddress.Text := qryMerchantInfo.FieldByName('business_address').AsString;
+  end
+  else
+  begin
+    // 如果没有数据，清空编辑框
+    edtName.Text := '';
+    edtContactInfo.Text := '';
+    edtBusinessAddress.Text := '';
+    ShowMessage('未能加载商家信息。');
   end;
+
+  // 不再需要调整网格列宽
+  // if qryMerchantInfo.Active then
+  // begin
+  //   ...
+  //   AdjustGridColumnWidths(gridMerchantInfo, MerchantInfoWidths);
+  //   ...
+  // end;
 end;
 procedure TMerchantForm.LoadProducts;
 var
   ProductWidths: TDictionary<string, Integer>;
 begin
   qryProducts.Close;
-  qryProducts.SQL.Text := 'SELECT product_id, name, price, stock, description FROM product WHERE merchant_id = :merchant_id';
+  // 使用v_all_merchant_products视图替代直接查询product表
+  qryProducts.SQL.Text :=
+    'SELECT' +
+    '  product_id AS 商品编号,' +
+    '  product_name AS 商品名称,' +
+    '  price AS 价格,' +
+    '  stock AS 库存,' +
+    '  description AS 描述 ' +
+    'FROM v_all_merchant_products ' +
+    'WHERE merchant_id = :merchant_id';
   qryProducts.ParamByName('merchant_id').AsInteger := FMerchantID;
   qryProducts.Open;
+  qryProducts.FieldByName('描述').OnGetText := GetText;
   
   // 如果没有设置数据源，则设置数据源
   if not Assigned(dsProducts) then
@@ -173,11 +209,11 @@ begin
     ProductWidths := TDictionary<string, Integer>.Create;
     try
       // 定义商品网格列宽
-      ProductWidths.AddOrSetValue('product_id', 80);
-      ProductWidths.AddOrSetValue('name', 150);
-      ProductWidths.AddOrSetValue('price', 80);
-      ProductWidths.AddOrSetValue('stock', 70);
-      ProductWidths.AddOrSetValue('description', 220);
+      ProductWidths.AddOrSetValue('商品编号', 80);
+      ProductWidths.AddOrSetValue('商品名称', 150);
+      ProductWidths.AddOrSetValue('价格', 80);
+      ProductWidths.AddOrSetValue('库存', 70);
+      ProductWidths.AddOrSetValue('描述', 220);
       
       AdjustGridColumnWidths(gridProducts, ProductWidths);
     finally
@@ -189,21 +225,19 @@ procedure TMerchantForm.LoadOrders;
 var
   OrderWidths: TDictionary<string, Integer>;
 begin
-  // 直接通过联表查询获取订单信息
+  // 使用v_order_details视图简化订单查询
   qryOrders.Close;
   qryOrders.SQL.Text := 
     'SELECT ' +
-    '  oi.order_id, ' +
-    '  oi.customer_id, ' +
-    '  SUM(oitem.quantity * oitem.price_at_order) AS total_amount, ' +
-    '  oi.status, ' +
-    '  oi.created_at, ' +
-    '  oi.updated_at ' +
-    'FROM order_info oi ' +
-    'JOIN order_item oitem ON oi.order_id = oitem.order_id ' +
-    'WHERE oi.merchant_id = :merchant_id ' +
-    'GROUP BY oi.order_id, oi.customer_id, oi.status, oi.created_at, oi.updated_at ' +
-    'ORDER BY oi.created_at DESC';
+    '  order_id AS 订单编号, ' +
+    '  customer_id AS 顾客编号, ' +
+    '  total_amount AS 总金额, ' +
+    '  order_status AS 状态, ' +
+    '  created_at AS 创建时间, ' +
+    '  updated_at AS 更新时间 ' +
+    'FROM v_order_details ' +
+    'WHERE merchant_id = :merchant_id ' +
+    'ORDER BY created_at DESC';
   
   qryOrders.ParamByName('merchant_id').AsInteger := FMerchantID;
   qryOrders.Open;
@@ -214,12 +248,12 @@ begin
     OrderWidths := TDictionary<string, Integer>.Create;
     try
       // 定义订单网格列宽
-      OrderWidths.AddOrSetValue('order_id', 70);
-      OrderWidths.AddOrSetValue('customer_name', 120);
-      OrderWidths.AddOrSetValue('total_amount', 90);
-      OrderWidths.AddOrSetValue('status', 100);
-      OrderWidths.AddOrSetValue('created_at', 130);
-      OrderWidths.AddOrSetValue('updated_at', 130);
+      OrderWidths.AddOrSetValue('订单编号', 200);
+      OrderWidths.AddOrSetValue('顾客编号', 200);
+      OrderWidths.AddOrSetValue('总金额', 200);
+      OrderWidths.AddOrSetValue('状态', 200);
+      OrderWidths.AddOrSetValue('创建时间', 400);
+      OrderWidths.AddOrSetValue('更新时间', 400);
       
       AdjustGridColumnWidths(gridOrders, OrderWidths);
     finally
@@ -279,7 +313,7 @@ end;
 procedure TMerchantForm.btnConfirmDeliveryClick(Sender: TObject);
 begin
   qryConfirmDelivery.Close;
-  qryConfirmDelivery.SQL.Text := 'UPDATE order_info SET status = ''delivered'' WHERE order_id = :order_id';
+  qryConfirmDelivery.SQL.Text := 'UPDATE order_info SET status = ''delivering'' WHERE order_id = :order_id';
   qryConfirmDelivery.ParamByName('order_id').AsInteger := selectedOrderID;
   qryConfirmDelivery.ExecSQL;
   CalculateMerchantRevenue; // 计算并更新商家收益
@@ -289,16 +323,26 @@ end;
 procedure TMerchantForm.CalculateMerchantRevenue;
 var
   TotalRevenue: Double;
+  StartDate, EndDate: TDateTime;
+  SQL: string;
 begin
+  StartDate := dtpStartDate.Date;
+  EndDate := dtpEndDate.Date;
+
   qryRevenue.Close;
-  qryRevenue.SQL.Text := 
-    'SELECT COALESCE(SUM(oitem.quantity * oitem.price_at_order), 0) as total_revenue ' +
-    'FROM order_info oi ' +
-    'JOIN order_item oitem ON oi.order_id = oitem.order_id ' +
-    'WHERE oi.merchant_id = :merchant_id AND oi.status = ''delivered''';
+  // 使用v_order_details视图简化收益计算查询，并增加日期筛选
+  SQL := 'SELECT COALESCE(SUM(total_amount), 0) as total_revenue ' +
+         'FROM v_order_details ' +
+         'WHERE merchant_id = :merchant_id AND order_status = ''delivered'' ' +
+         'AND created_at >= :start_date ' +
+         'AND created_at <= :end_date';
   
+  qryRevenue.SQL.Text := SQL;
   qryRevenue.ParamByName('merchant_id').AsInteger := FMerchantID;
+  qryRevenue.ParamByName('start_date').AsDate := StartDate;
+  qryRevenue.ParamByName('end_date').AsDate := EndDate + 1;  // 加1天以包含结束日期当天
   qryRevenue.Open;
+  
   TotalRevenue := qryRevenue.FieldByName('total_revenue').AsFloat;
   lblRevenueValue.Caption := FormatFloat('#,##0.00', TotalRevenue) + ' 元';
 end;
@@ -332,7 +376,8 @@ end;
 
 procedure TMerchantForm.TabRevenueShow(Sender: TObject);
 begin
-  CalculateMerchantRevenue;
+  // 调用统计生成函数，不再直接调用CalculateMerchantRevenue
+  btnGenerateStatsClick(nil);
 end;
 
 class procedure TMerchantForm.ShowMerchantForm(MerchantID: Integer);
@@ -355,6 +400,10 @@ begin
   selectedOrderID := -1;
   
   // 确保查询组件已创建
+  if not Assigned(qryMerchantInfo) then
+    qryMerchantInfo := TFDQuery.Create(Self);
+  if not Assigned(qryUpdateMerchantInfo) then
+    qryUpdateMerchantInfo := TFDQuery.Create(Self);
   if not Assigned(qryProducts) then
     qryProducts := TFDQuery.Create(Self);
   if not Assigned(qryAddProduct) then
@@ -371,6 +420,12 @@ begin
     qryRevenue := TFDQuery.Create(Self);
     
   // 确保数据源已创建
+  if not Assigned(dsMerchantInfo) then
+  begin
+    dsMerchantInfo := TDataSource.Create(Self);
+    if Assigned(qryMerchantInfo) then
+      dsMerchantInfo.DataSet := qryMerchantInfo;
+  end;
   if not Assigned(dsProducts) then
   begin
     dsProducts := TDataSource.Create(Self);
@@ -379,6 +434,10 @@ begin
   end;
     
   ConnectToDatabase;
+  
+  // 设置默认日期范围
+  dtpStartDate.Date := Date - 30;  // 默认显示过去30天
+  dtpEndDate.Date := Date;         // 默认结束日期为今天
 end;
 
 procedure TMerchantForm.gridProductsCellClick(Column: TColumn);
@@ -392,11 +451,11 @@ begin
     mmoProductDescription.Text := '';
     
     // 再填充数据
-    selectedProductID := qryProducts.FieldByName('product_id').AsInteger;
-    edtProductName.Text := qryProducts.FieldByName('name').AsWideString;
-    edtProductPrice.Text := FloatToStr(qryProducts.FieldByName('price').AsFloat);
-    edtProductStock.Text := IntToStr(qryProducts.FieldByName('stock').AsInteger);
-    mmoProductDescription.Text := qryProducts.FieldByName('description').AsWideString;
+    selectedProductID := qryProducts.FieldByName('商品编号').AsInteger;
+    edtProductName.Text := qryProducts.FieldByName('商品名称').AsWideString;
+    edtProductPrice.Text := FloatToStr(qryProducts.FieldByName('价格').AsFloat);
+    edtProductStock.Text := IntToStr(qryProducts.FieldByName('库存').AsInteger);
+    mmoProductDescription.Text := qryProducts.FieldByName('描述').AsWideString;
   end;
 end;
 
@@ -404,7 +463,24 @@ procedure TMerchantForm.gridOrdersCellClick(Column: TColumn);
 begin
   if (qryOrders.Active) and (not qryOrders.IsEmpty) then
   begin
-    selectedOrderID := qryOrders.FieldByName('order_id').AsInteger;
+    selectedOrderID := qryOrders.FieldByName('订单编号').AsInteger;
+    
+    // 根据订单状态启用或禁用按钮
+    if qryOrders.FieldByName('状态').AsString = 'pending' then
+    begin
+      btnConfirmOrder.Enabled := True;
+      btnConfirmDelivery.Enabled := False;
+    end
+    else if qryOrders.FieldByName('状态').AsString = 'processing' then
+    begin
+      btnConfirmOrder.Enabled := False;
+      btnConfirmDelivery.Enabled := True;
+    end
+    else
+    begin
+      btnConfirmOrder.Enabled := False;
+      btnConfirmDelivery.Enabled := False;
+    end;
   end;
 end;
 
@@ -436,6 +512,41 @@ begin
       // 静默忽略宽度调整过程中的错误
       ;
   end;
+end;
+
+// 新增：更新商家信息按钮点击事件
+procedure TMerchantForm.btnUpdateMerchantInfoClick(Sender: TObject);
+begin
+  // 简单输入验证
+  if (Trim(edtName.Text) = '') or (Trim(edtContactInfo.Text) = '') or (Trim(edtBusinessAddress.Text) = '') then
+  begin
+    ShowMessage('商家名称、联系信息和经营地址不能为空！');
+    Exit;
+  end;
+
+  try
+    qryUpdateMerchantInfo.Close;
+    qryUpdateMerchantInfo.SQL.Text := 'UPDATE merchant SET name = :name, contact_info = :contact_info, business_address = :address WHERE merchant_id = :merchant_id';
+    qryUpdateMerchantInfo.ParamByName('name').AsWideString := Trim(edtName.Text);
+    qryUpdateMerchantInfo.ParamByName('contact_info').AsWideString := Trim(edtContactInfo.Text);
+    qryUpdateMerchantInfo.ParamByName('address').AsWideString := Trim(edtBusinessAddress.Text);
+    qryUpdateMerchantInfo.ParamByName('merchant_id').AsInteger := FMerchantID;
+    qryUpdateMerchantInfo.ExecSQL;
+    ShowMessage('商家信息更新成功！');
+    // 可以选择重新加载信息以确认，但通常不需要
+    // LoadMerchantInfo;
+  except
+    on E: Exception do
+    begin
+      ShowMessage('更新商家信息失败：' + E.Message);
+    end;
+  end;
+end;
+
+// 添加生成统计按钮的点击事件处理器
+procedure TMerchantForm.btnGenerateStatsClick(Sender: TObject);
+begin
+  CalculateMerchantRevenue;
 end;
 
 end.
