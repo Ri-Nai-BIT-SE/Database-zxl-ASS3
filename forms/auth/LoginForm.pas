@@ -108,6 +108,7 @@ var
   Username, Password: string; // Define Username and Password locally
   MerchantID: Integer; // 添加商家ID变量
   DeliveryID: Integer; // 添加外卖员ID变量
+  CustomerID: Integer; // 添加顾客ID变量
 begin
   LoginSuccessful := False;
   LoggedInUserRole := '';
@@ -161,7 +162,12 @@ begin
 
       // 根据角色创建主窗体
       if LoggedInUserRole = 'customer' then
-        Application.CreateForm(TCustomerForm, gCustomerForm)
+      begin
+        // 获取顾客ID
+        CustomerID := LoggedInUserID;
+        // 调用ShowCustomerForm方法并传递顾客ID
+        TCustomerForm.ShowCustomerForm(CustomerID);
+      end
       else if LoggedInUserRole = 'merchant' then
       begin
         // 获取商家ID
