@@ -275,14 +275,14 @@ var
 begin
   qryMerchants.Close;
   qryMerchants.Open;
-  qryMerchants.FieldByName('描述').OnGetText := GetText;
+  qryMerchants.FieldByName('商家地址').OnGetText := GetText;
   
   if qryMerchants.Active then
   begin
     MerchantWidths := TDictionary<string, Integer>.Create;
     try
       MerchantWidths.AddOrSetValue('商家编号', 80);
-      MerchantWidths.AddOrSetValue('商家名称', 200);
+      MerchantWidths.AddOrSetValue('商家名称', 160);
       MerchantWidths.AddOrSetValue('商家地址', 300);
       
       AdjustGridColumnWidths(gridMerchants, MerchantWidths);
