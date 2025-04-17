@@ -84,6 +84,7 @@ type
     lblTotalOrders: TLabel;
     lblOrdersValue: TLabel;
     lblTotalRevenue: TLabel;
+    lblRevenueValue: TLabel;
     
     procedure FormCreate(Sender: TObject);
     procedure btnAddProductClick(Sender: TObject);
@@ -352,13 +353,12 @@ begin
   
   TotalRevenue := qryRevenue.FieldByName('total_revenue').AsFloat;
   lblRevenueValue.Caption := FormatFloat('#,##0.00', TotalRevenue) + ' 元';
-  lblRevenueValuePanel.Caption := FormatFloat('#,##0.00', TotalRevenue) + ' 元';
   
   // 计算总订单数量
   qryRevenue.Close;
   SQL := 'SELECT COUNT(*) as total_orders ' +
          'FROM v_order_details ' +
-         'WHERE merchant_id = :merchant_id ' +
+         'WHERE merchant_id = :merchant_id AND order_status = ''delivered'' ' +
          'AND created_at >= :start_date ' +
          'AND created_at <= :end_date';
          

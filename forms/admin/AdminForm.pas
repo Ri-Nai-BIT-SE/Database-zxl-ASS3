@@ -189,8 +189,8 @@ begin
   end;
   
   // 设置默认日期范围
-  dtpStartDate.Date := Date - 30;
-  dtpEndDate.Date := Date;
+  dtpStartDate.Date := Date - 30;  // 默认显示过去30天
+  dtpEndDate.Date := Date;         // 默认结束日期为今天
 end;
 
 procedure TAdminForm.FormShow(Sender: TObject);
@@ -365,6 +365,7 @@ end;
 
 procedure TAdminForm.TabStatsShow(Sender: TObject);
 begin
+  // 自动生成统计，使用当前设置的日期范围
   btnGenerateStatsClick(nil);
 end;
 
@@ -463,7 +464,7 @@ begin
          'FROM v_order_details ' +
          'WHERE order_status = ''delivered'' ' + // 按视图中的 order_status 过滤
          'AND created_at >= :start_date ' +
-         'AND created_at <= :end_date'; // 注意：结束日期处理保持不变
+         'AND created_at <= :end_date';
 
   tmpQuery.Close;
   tmpQuery.SQL.Text := SQL;
@@ -474,9 +475,9 @@ begin
   TotalRevenue := tmpQuery.FieldByName('total_revenue').AsFloat;
   lblRevenueValue.Caption := FormatFloat('#,##0.00', TotalRevenue) + ' 元';
 
-  // 计算订单总数 - 这个查询不需要 total_amount，保持不变
+  // 计算订单总数 - 使用同样的视图进行一致的筛选
   SQL := 'SELECT COUNT(*) as total_orders ' +
-         'FROM order_info ' + // 这里可以直接查 order_info 获取总数
+         'FROM v_order_details ' + // 改为使用视图以保持筛选条件一致
          'WHERE created_at >= :start_date ' +
          'AND created_at <= :end_date';
 

@@ -572,8 +572,8 @@ object AdminForm: TAdminForm
         BevelOuter = bvNone
         TabOrder = 0
         object lblStatsTitle: TLabel
-          Left = 29
-          Top = 19
+          Left = 15
+          Top = 15
           Width = 216
           Height = 45
           Margins.Left = 4
@@ -589,10 +589,10 @@ object AdminForm: TAdminForm
           ParentFont = False
         end
         object gboxDateRange: TGroupBox
-          Left = 29
-          Top = 60
-          Width = 1437
-          Height = 120
+          Left = 15
+          Top = 75
+          Width = 1200
+          Height = 135
           Margins.Left = 4
           Margins.Top = 4
           Margins.Right = 4
@@ -600,8 +600,8 @@ object AdminForm: TAdminForm
           Caption = #26102#38388#33539#22260
           TabOrder = 0
           object lblStartDate: TLabel
-            Left = 19
-            Top = 45
+            Left = 15
+            Top = 60
             Width = 112
             Height = 37
             Margins.Left = 4
@@ -611,8 +611,8 @@ object AdminForm: TAdminForm
             Caption = #24320#22987#26085#26399
           end
           object lblEndDate: TLabel
-            Left = 397
-            Top = 45
+            Left = 480
+            Top = 60
             Width = 112
             Height = 37
             Margins.Left = 4
@@ -622,9 +622,9 @@ object AdminForm: TAdminForm
             Caption = #32467#26463#26085#26399
           end
           object dtpStartDate: TDateTimePicker
-            Left = 149
-            Top = 40
-            Width = 240
+            Left = 135
+            Top = 52
+            Width = 320
             Height = 45
             Margins.Left = 4
             Margins.Top = 4
@@ -635,9 +635,9 @@ object AdminForm: TAdminForm
             TabOrder = 0
           end
           object dtpEndDate: TDateTimePicker
-            Left = 514
-            Top = 40
-            Width = 240
+            Left = 600
+            Top = 52
+            Width = 320
             Height = 45
             Margins.Left = 4
             Margins.Top = 4
@@ -648,9 +648,9 @@ object AdminForm: TAdminForm
             TabOrder = 1
           end
           object btnGenerateStats: TButton
-            Left = 780
-            Top = 40
-            Width = 180
+            Left = 945
+            Top = 52
+            Width = 230
             Height = 45
             Margins.Left = 4
             Margins.Top = 4
@@ -662,92 +662,102 @@ object AdminForm: TAdminForm
           end
         end
         object pnlRevenueStats: TPanel
-          Left = 29
-          Top = 180
-          Width = 557
-          Height = 120
+          Left = 15
+          Top = 225
+          Width = 480
+          Height = 240
           Margins.Left = 4
           Margins.Top = 4
           Margins.Right = 4
           Margins.Bottom = 4
-          BevelOuter = bvLowered
+          BevelKind = bkFlat
+          BevelOuter = bvNone
+          ParentBackground = False
           TabOrder = 1
           object lblTotalRevenue: TLabel
-            Left = 29
-            Top = 19
-            Width = 245
-            Height = 45
-            Margins.Left = 4
-            Margins.Top = 4
-            Margins.Right = 4
-            Margins.Bottom = 4
-            Caption = #24179#21488#24635#33829#19994#39069#65306
-            Font.Charset = DEFAULT_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -33
-            Font.Name = 'Segoe UI'
-            Font.Style = []
-            ParentFont = False
-          end
-          object lblRevenueValue: TLabel
-            Left = 29
-            Top = 65
-            Width = 87
+            Left = 15
+            Top = 15
+            Width = 396
             Height = 60
             Margins.Left = 4
             Margins.Top = 4
             Margins.Right = 4
             Margins.Bottom = 4
-            Caption = '0.00'
+            Alignment = taCenter
+            Caption = #24635#25910#30410
             Font.Charset = DEFAULT_CHARSET
-            Font.Color = clBlue
-            Font.Height = -44
+            Font.Color = clWindowText
+            Font.Height = -43
+            Font.Name = 'Segoe UI'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object lblRevenueValue: TLabel
+            Left = 15
+            Top = 120
+            Width = 436
+            Height = 75
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
+            Alignment = taCenter
+            AutoSize = False
+            Caption = '0.00 '#20803
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clGreen
+            Font.Height = -50
             Font.Name = 'Segoe UI'
             Font.Style = [fsBold]
             ParentFont = False
           end
         end
         object pnlOrderStats: TPanel
-          Left = 605
-          Top = 180
-          Width = 557
-          Height = 120
+          Left = 510
+          Top = 225
+          Width = 480
+          Height = 240
           Margins.Left = 4
           Margins.Top = 4
           Margins.Right = 4
           Margins.Bottom = 4
-          BevelOuter = bvLowered
+          BevelKind = bkFlat
+          BevelOuter = bvNone
+          ParentBackground = False
           TabOrder = 2
           object lblTotalOrders: TLabel
-            Left = 29
-            Top = 19
-            Width = 210
-            Height = 45
-            Margins.Left = 4
-            Margins.Top = 4
-            Margins.Right = 4
-            Margins.Bottom = 4
-            Caption = #24635#35746#21333#25968#37327#65306
-            Font.Charset = DEFAULT_CHARSET
-            Font.Color = clWindowText
-            Font.Height = -33
-            Font.Name = 'Segoe UI'
-            Font.Style = []
-            ParentFont = False
-          end
-          object lblOrdersValue: TLabel
-            Left = 29
-            Top = 65
-            Width = 25
+            Left = 15
+            Top = 15
+            Width = 396
             Height = 60
             Margins.Left = 4
             Margins.Top = 4
             Margins.Right = 4
             Margins.Bottom = 4
-            Caption = '0'
+            Alignment = taCenter
+            Caption = #24635#35746#21333#25968
             Font.Charset = DEFAULT_CHARSET
-            Font.Color = clGreen
-            Font.Height = -44
+            Font.Color = clWindowText
+            Font.Height = -43
+            Font.Name = 'Segoe UI'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object lblOrdersValue: TLabel
+            Left = 15
+            Top = 120
+            Width = 436
+            Height = 75
+            Margins.Left = 4
+            Margins.Top = 4
+            Margins.Right = 4
+            Margins.Bottom = 4
+            Alignment = taCenter
+            AutoSize = False
+            Caption = '0 '#21333
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clBlue
+            Font.Height = -50
             Font.Name = 'Segoe UI'
             Font.Style = [fsBold]
             ParentFont = False

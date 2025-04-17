@@ -107,6 +107,7 @@ var
   RoleType: TRoleType;
   Username, Password: string; // Define Username and Password locally
   MerchantID: Integer; // 添加商家ID变量
+  DeliveryID: Integer; // 添加外卖员ID变量
 begin
   LoginSuccessful := False;
   LoggedInUserRole := '';
@@ -169,7 +170,12 @@ begin
         TMerchantForm.ShowMerchantForm(MerchantID);
       end
       else if LoggedInUserRole = 'delivery' then
-        Application.CreateForm(TDeliveryForm, gDeliveryForm)
+      begin
+        // 获取外卖员ID
+        DeliveryID := LoggedInUserID;
+        // 修改为传递外卖员ID
+        TDeliveryForm.ShowDeliveryForm(DeliveryID);
+      end
       else if LoggedInUserRole = 'admin' then
         TAdminForm.ShowAdminForm
       else
