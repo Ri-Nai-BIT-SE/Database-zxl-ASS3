@@ -11,7 +11,7 @@ uses
   FireDAC.Phys.PG, FireDAC.Phys.PGDef, FireDAC.Stan.Param, 
   FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, Vcl.Grids, Vcl.DBGrids, 
   FireDAC.Comp.DataSet, Vcl.DBCtrls, Vcl.Mask, Vcl.Buttons,
-  System.Generics.Collections;
+  System.Generics.Collections, System.JSON, OrderStatus;
 
 type
   TAdminForm = class(TForm)
@@ -112,6 +112,9 @@ type
     procedure AdjustGridColumnWidths(AGrid: TDBGrid; const AColumnWidths: TDictionary<string, Integer>);
   public
     class procedure ShowAdminForm;
+    function GetStatusDescription(const Status: string; const MerchantID: Integer = 0; const DeliveryManID: Integer = 0): string;
+    procedure UpdateOrderStatusDisplay(ALabel: TLabel; const Status: string);
+    procedure FormatOrderTimeline(const JsonStr: string; var FormattedText: string);
   end;
 
 var
@@ -540,6 +543,34 @@ end;
 procedure TAdminForm.GetText(Sender: TField; var Text: String; DisplayText: Boolean);
 begin
   Text := Sender.AsString;
+end;
+
+function TAdminForm.GetStatusDescription(const Status: string; const MerchantID: Integer = 0; const DeliveryManID: Integer = 0): string;
+begin
+  // 调用共享单元中的方法
+  Result := TOrderStatusHelper.GetStatusDescription(Status, MerchantID, DeliveryManID);
+end;
+
+procedure TAdminForm.UpdateOrderStatusDisplay(ALabel: TLabel; const Status: string);
+var
+  TempFont: TFont;
+begin
+  // 先复制字体对象
+  TempFont := TFont.Create;
+  try
+    TempFont.Assign(ALabel.Font);
+    // 使用共享单元中的方法设置状态样式
+    TOrderStatusHelper.ApplyStatusStyle(Status, TempFont);
+    // 将修改后的字体属性应用回标签字体
+    ALabel.Font.Assign(TempFont);
+  finally
+    TempFont.Free;
+  end;
+end;
+
+procedure TAdminForm.FormatOrderTimeline(const JsonStr: string; var FormattedText: string);
+begin
+  TOrderStatusHelper.FormatOrderTimeline(JsonStr, FormattedText);
 end;
 
 end. 

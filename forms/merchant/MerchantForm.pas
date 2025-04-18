@@ -9,7 +9,7 @@ uses
   FireDAC.Phys.PG, FireDAC.Phys.PGDef, FireDAC.Stan.Param,
   FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, Vcl.Grids, Vcl.DBGrids,
   FireDAC.Comp.DataSet, Vcl.DBCtrls, Vcl.Mask, Vcl.Buttons,
-  System.Generics.Collections, System.UITypes;
+  System.Generics.Collections, System.UITypes, System.JSON, OrderStatus;
 type
   TMerchantForm = class(TForm)
     // 标签页控件
@@ -118,6 +118,9 @@ type
     procedure AdjustGridColumnWidths(AGrid: TDBGrid; const AColumnWidths: TDictionary<string, Integer>);
     procedure GetText(Sender: TField; var Text: String; DisplayText: Boolean);
     procedure UpdateToggleStatusButton;
+    function GetStatusDescription(const Status: string): string;
+    procedure UpdateOrderStatusDisplay(ALabel: TLabel; const Status: string);
+    procedure FormatOrderTimeline(const JsonStr: string; var FormattedText: string);
   public
     property CurrentMerchantID: Integer read FMerchantID write FMerchantID;
     class procedure ShowMerchantForm(MerchantID: Integer);
@@ -660,6 +663,37 @@ end;
 procedure TMerchantForm.btnGenerateStatsClick(Sender: TObject);
 begin
   CalculateMerchantRevenue;
+end;
+
+function TMerchantForm.GetStatusDescription(const Status: string): string;
+begin
+  // 调用共享单元中的方法，传入商家ID
+  Result := TOrderStatusHelper.GetStatusDescription(Status, FMerchantID);
+end;
+
+procedure TMerchantForm.UpdateOrderStatusDisplay(ALabel: TLabel; const Status: string);
+var
+  TempFont: TFont;
+begin
+  // 创建临时字体对象
+  TempFont := TFont.Create;
+  try
+    // 复制原始字体属性
+    TempFont.Assign(ALabel.Font);
+    
+    // 应用状态样式到临时字体
+    TOrderStatusHelper.ApplyStatusStyle(Status, TempFont);
+    
+    // 将临时字体属性应用回标签字体
+    ALabel.Font.Assign(TempFont);
+  finally
+    TempFont.Free;
+  end;
+end;
+
+procedure TMerchantForm.FormatOrderTimeline(const JsonStr: string; var FormattedText: string);
+begin
+  TOrderStatusHelper.FormatOrderTimeline(JsonStr, FormattedText);
 end;
 
 end.

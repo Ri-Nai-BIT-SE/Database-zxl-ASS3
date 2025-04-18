@@ -25,6 +25,7 @@ uses
   
   LoginForm in 'forms\auth\LoginForm.pas' {LoginForm},
   DataModuleUnit in 'data\DataModuleUnit.pas' {DM: TDataModule},
+  OrderStatus in 'data\OrderStatus.pas' {OrderStatus},
   AuthDataModule in 'data\auth\AuthDataModule.pas' {AuthDM: TDataModule},
   CustomerForm in 'forms\customer\CustomerForm.pas' {CustomerForm},
   MerchantForm in 'forms\merchant\MerchantForm.pas' {MerchantForm},

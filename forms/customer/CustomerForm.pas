@@ -11,7 +11,7 @@ uses
   FireDAC.Phys.PG, FireDAC.Phys.PGDef, FireDAC.Stan.Param,
   FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, Vcl.Grids, Vcl.DBGrids,
   FireDAC.Comp.DataSet, Vcl.DBCtrls, Vcl.Mask, System.Generics.Collections,
-  System.UITypes, System.Math;
+  System.UITypes, System.Math, System.JSON, System.DateUtils, OrderStatus;
 
 type
   TCartItem = class
@@ -87,6 +87,16 @@ type
     lblTotalAmountValue: TLabel;
     edtCartQuantity: TEdit;
     lblCartQuantity: TLabel;
+    dlgOrderDetails: TForm;
+    pnlOrderInfo: TPanel;
+    lblOrderID: TLabel;
+    lblOrderStatus: TLabel;
+    lblOrderTime: TLabel;
+    lblMerchantInfo: TLabel;
+    gridOrderItems: TStringGrid;
+    memoOrderHistory: TMemo;
+    btnCloseDetails: TButton;
+    qryOrderHistory: TFDQuery;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure TabAccountShow(Sender: TObject);
@@ -109,6 +119,11 @@ type
     procedure btnCartPlaceOrderClick(Sender: TObject);
     procedure gridCartSelectCell(Sender: TObject; ACol, ARow: Integer;
       var CanSelect: Boolean);
+    procedure ShowEnhancedOrderDetails(OrderID: Integer);
+    procedure LoadOrderStatusHistory(OrderID: Integer);
+    function GetStatusDescription(const Status: string; const MerchantID: Integer = 0; const DeliveryManID: Integer = 0): string;
+    procedure FormatOrderTimeline(const JsonStr: string; var FormattedText: string);
+    procedure btnCloseDetailsClick(Sender: TObject);
   private
     FCustomerID: Integer;
     FSelectedMerchantID: Integer;
@@ -126,12 +141,12 @@ type
     procedure ClearCart;
     procedure AdjustGridColumnWidths(AGrid: TDBGrid; const AColumnWidths: TDictionary<string, Integer>);
     function GetCartTotalValue: Double;
-    procedure ShowCartContents;
-    procedure ShowOrderDetails(OrderID: Integer);
     function PlaceOrder(MerchantID: Integer; CartItems: TList<TCartItem>): Boolean;
     function ReorderFromHistory(OrderID: Integer): Boolean;
     procedure UpdateCartGrid;
     procedure GetText(Sender: TField; var Text: String; DisplayText: Boolean);
+    procedure InitializeOrderDetailsDialog;
+    procedure UpdateOrderStatusDisplay(const Status: string);
   public
     property CustomerID: Integer read FCustomerID write FCustomerID;
     class procedure ShowCustomerForm(CustomerID: Integer);
@@ -244,6 +259,7 @@ begin
   qryPlaceOrder.Connection := DM.FDConnection;
   qryAddOrderItem.Connection := DM.FDConnection;
   qryRecharge.Connection := DM.FDConnection;
+  qryOrderHistory.Connection := DM.FDConnection;
 end;
 
 procedure TCustomerForm.LoadCustomerInfo;
@@ -380,79 +396,6 @@ begin
   for i := 0 to FCart.Count - 1 do
     TotalValue := TotalValue + (FCart[i].Price * FCart[i].Quantity);
   Result := TotalValue;
-end;
-
-procedure TCustomerForm.ShowCartContents;
-var
-  i: Integer;
-  CartContents: string;
-  TotalValue: Double;
-begin
-  if FCart.Count = 0 then
-  begin
-    ShowMessage('购物车是空的');
-    Exit;
-  end;
-  
-  CartContents := '购物车内容:' + #13#10 + #13#10;
-  TotalValue := 0;
-  
-  for i := 0 to FCart.Count - 1 do
-  begin
-    CartContents := CartContents + Format('%s - %.2f元 x %d = %.2f元', 
-      [FCart[i].ProductName, FCart[i].Price, FCart[i].Quantity, 
-       FCart[i].Price * FCart[i].Quantity]) + #13#10;
-       
-    TotalValue := TotalValue + (FCart[i].Price * FCart[i].Quantity);
-  end;
-  
-  CartContents := CartContents + #13#10 + Format('总价: %.2f元', [TotalValue]);
-  ShowMessage(CartContents);
-end;
-
-procedure TCustomerForm.ShowOrderDetails(OrderID: Integer);
-var
-  OrderDetails: string;
-  TotalAmount: Double;
-begin
-  qryOrderDetails.Close;
-  qryOrderDetails.SQL.Text := 
-    'SELECT oi.order_item_id, oi.product_id, p.name AS product_name, ' +
-    'oi.quantity, oi.price_at_order ' +
-    'FROM order_item oi ' +
-    'JOIN product p ON oi.product_id = p.product_id ' +
-    'WHERE oi.order_id = :order_id';
-  qryOrderDetails.ParamByName('order_id').AsInteger := OrderID;
-  qryOrderDetails.Open;
-  
-  if qryOrderDetails.RecordCount = 0 then
-  begin
-    ShowMessage('未找到订单详情');
-    Exit;
-  end;
-  
-  OrderDetails := Format('订单 #%d 详情:', [OrderID]) + #13#10 + #13#10;
-  TotalAmount := 0;
-  
-  qryOrderDetails.First;
-  while not qryOrderDetails.Eof do
-  begin
-    OrderDetails := OrderDetails + Format('%s - %.2f元 x %d = %.2f元',
-      [qryOrderDetails.FieldByName('product_name').AsString,
-       qryOrderDetails.FieldByName('price_at_order').AsFloat,
-       qryOrderDetails.FieldByName('quantity').AsInteger,
-       qryOrderDetails.FieldByName('price_at_order').AsFloat * 
-       qryOrderDetails.FieldByName('quantity').AsInteger]) + #13#10;
-       
-    TotalAmount := TotalAmount + 
-      (qryOrderDetails.FieldByName('price_at_order').AsFloat * 
-       qryOrderDetails.FieldByName('quantity').AsInteger);
-       
-    qryOrderDetails.Next;
-  end;
-  
-  OrderDetails := OrderDetails + #13#10 + Format('总价: %.2f元', [TotalAmount]);
-  ShowMessage(OrderDetails);
 end;
 
 function TCustomerForm.PlaceOrder(MerchantID: Integer; CartItems: TList<TCartItem>): Boolean;
@@ -907,7 +850,7 @@ begin
     Exit;
   end;
   
-  ShowOrderDetails(FSelectedOrderID);
+  ShowEnhancedOrderDetails(FSelectedOrderID);
 end;
 
 procedure TCustomerForm.UpdateCartGrid;
@@ -1053,6 +996,248 @@ end;
 procedure TCustomerForm.GetText(Sender: TField; var Text: String; DisplayText: Boolean);
 begin
   Text := Sender.AsString;
+end;
+
+procedure TCustomerForm.InitializeOrderDetailsDialog;
+begin
+  if not Assigned(dlgOrderDetails) then
+  begin
+    dlgOrderDetails := TForm.Create(Self);
+    with dlgOrderDetails do
+    begin
+      Caption := '订单详情';
+      Width := 600;
+      Height := 500;
+      Position := poScreenCenter;
+      BorderStyle := bsDialog;
+      
+      pnlOrderInfo := TPanel.Create(dlgOrderDetails);
+      with pnlOrderInfo do
+      begin
+        Parent := dlgOrderDetails;
+        Align := alTop;
+        Height := 120;
+        BevelOuter := bvNone;
+        
+        lblOrderID := TLabel.Create(pnlOrderInfo);
+        with lblOrderID do
+        begin
+          Parent := pnlOrderInfo;
+          Left := 10;
+          Top := 10;
+          Font.Style := [fsBold];
+        end;
+        
+        lblOrderStatus := TLabel.Create(pnlOrderInfo);
+        with lblOrderStatus do
+        begin
+          Parent := pnlOrderInfo;
+          Left := 10;
+          Top := 35;
+        end;
+        
+        lblOrderTime := TLabel.Create(pnlOrderInfo);
+        with lblOrderTime do
+        begin
+          Parent := pnlOrderInfo;
+          Left := 10;
+          Top := 60;
+        end;
+        
+        lblMerchantInfo := TLabel.Create(pnlOrderInfo);
+        with lblMerchantInfo do
+        begin
+          Parent := pnlOrderInfo;
+          Left := 10;
+          Top := 85;
+        end;
+      end;
+      
+      gridOrderItems := TStringGrid.Create(dlgOrderDetails);
+      with gridOrderItems do
+      begin
+        Parent := dlgOrderDetails;
+        Align := alTop;
+        Height := 150;
+        Top := 120;
+        FixedRows := 1;
+        ColCount := 5;
+        RowCount := 2;
+        Options := Options + [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRowSelect];
+        
+        // 设置表头
+        Cells[0, 0] := '商品编号';
+        Cells[1, 0] := '商品名称';
+        Cells[2, 0] := '单价';
+        Cells[3, 0] := '数量';
+        Cells[4, 0] := '小计';
+      end;
+      
+      memoOrderHistory := TMemo.Create(dlgOrderDetails);
+      with memoOrderHistory do
+      begin
+        Parent := dlgOrderDetails;
+        Align := alClient;
+        ReadOnly := True;
+        ScrollBars := ssVertical;
+      end;
+      
+      btnCloseDetails := TButton.Create(dlgOrderDetails);
+      with btnCloseDetails do
+      begin
+        Parent := dlgOrderDetails;
+        Align := alBottom;
+        Caption := '关闭';
+        Height := 30;
+        OnClick := btnCloseDetailsClick;
+      end;
+    end;
+  end;
+end;
+
+procedure TCustomerForm.ShowEnhancedOrderDetails(OrderID: Integer);
+var
+  TotalAmount: Double;
+  CurrentStatus: string;
+  MerchantID, DeliveryManID: Integer;
+begin
+  InitializeOrderDetailsDialog;
+  
+  // 查询订单基本信息
+  with qryOrderDetails do
+  begin
+    Close;
+    SQL.Text := 
+      'SELECT o.order_id, o.status, o.created_at, o.updated_at, ' +
+      'm.name AS merchant_name, m.contact_info AS merchant_contact, ' +
+      'o.merchant_id, o.delivery_man_id ' +
+      'FROM order_info o ' +
+      'JOIN merchant m ON o.merchant_id = m.merchant_id ' +
+      'WHERE o.order_id = :order_id';
+    ParamByName('order_id').AsInteger := OrderID;
+    Open;
+    
+    if RecordCount = 0 then
+    begin
+      ShowMessage('未找到订单信息');
+      Exit;
+    end;
+    
+    // 更新订单基本信息显示
+    CurrentStatus := FieldByName('status').AsString;
+    MerchantID := FieldByName('merchant_id').AsInteger;
+    DeliveryManID := 0;
+    if not FieldByName('delivery_man_id').IsNull then
+      DeliveryManID := FieldByName('delivery_man_id').AsInteger;
+    
+    lblOrderID.Caption := Format('订单编号: #%d', [OrderID]);
+    lblOrderStatus.Caption := Format('状态: %s', [TOrderStatusHelper.GetStatusDescription(CurrentStatus, MerchantID, DeliveryManID)]);
+    UpdateOrderStatusDisplay(CurrentStatus);
+    lblOrderTime.Caption := Format('创建时间: %s', [FormatDateTime('yyyy-mm-dd hh:nn:ss', FieldByName('created_at').AsDateTime)]);
+    lblMerchantInfo.Caption := Format('商家: %s (%s)', 
+      [FieldByName('merchant_name').AsString, FieldByName('merchant_contact').AsString]);
+  end;
+  
+  // 查询订单商品明细
+  with qryOrderDetails do
+  begin
+    Close;
+    SQL.Text := 
+      'SELECT oi.product_id, p.name AS product_name, ' +
+      'oi.quantity, oi.price_at_order ' +
+      'FROM order_item oi ' +
+      'JOIN product p ON oi.product_id = p.product_id ' +
+      'WHERE oi.order_id = :order_id';
+    ParamByName('order_id').AsInteger := OrderID;
+    Open;
+    
+    // 更新商品明细表格
+    gridOrderItems.RowCount := RecordCount + 1;
+    TotalAmount := 0;
+    
+    First;
+    var Row := 1;
+    while not Eof do
+    begin
+      gridOrderItems.Cells[0, Row] := FieldByName('product_id').AsString;
+      gridOrderItems.Cells[1, Row] := FieldByName('product_name').AsString;
+      gridOrderItems.Cells[2, Row] := Format('%.2f', [FieldByName('price_at_order').AsFloat]);
+      gridOrderItems.Cells[3, Row] := FieldByName('quantity').AsString;
+      gridOrderItems.Cells[4, Row] := Format('%.2f', 
+        [FieldByName('price_at_order').AsFloat * FieldByName('quantity').AsInteger]);
+      
+      TotalAmount := TotalAmount + (FieldByName('price_at_order').AsFloat * FieldByName('quantity').AsInteger);
+      Inc(Row);
+      Next;
+    end;
+  end;
+  
+  // 加载订单状态历史
+  LoadOrderStatusHistory(OrderID);
+  
+  dlgOrderDetails.ShowModal;
+end;
+
+procedure TCustomerForm.LoadOrderStatusHistory(OrderID: Integer);
+begin
+  qryOrderHistory.Close;
+  qryOrderHistory.SQL.Text := 
+    'SELECT order_data, change_timestamp ' +
+    'FROM order_log ' +
+    'WHERE order_id = :order_id ' +
+    'ORDER BY change_timestamp ASC';
+  qryOrderHistory.ParamByName('order_id').AsInteger := OrderID;
+  qryOrderHistory.Open;
+  
+  memoOrderHistory.Clear;
+  memoOrderHistory.Lines.Add('订单状态变更历史:');
+  memoOrderHistory.Lines.Add('');
+  
+  while not qryOrderHistory.Eof do
+  begin
+    var FormattedText: string;
+    FormatOrderTimeline(qryOrderHistory.FieldByName('order_data').AsString, FormattedText);
+    memoOrderHistory.Lines.Add(FormattedText);
+    qryOrderHistory.Next;
+  end;
+end;
+
+function TCustomerForm.GetStatusDescription(const Status: string; const MerchantID: Integer = 0; const DeliveryManID: Integer = 0): string;
+begin
+  Result := TOrderStatusHelper.GetStatusDescription(Status, MerchantID, DeliveryManID);
+end;
+
+procedure TCustomerForm.FormatOrderTimeline(const JsonStr: string; var FormattedText: string);
+begin
+  TOrderStatusHelper.FormatOrderTimeline(JsonStr, FormattedText);
+end;
+
+procedure TCustomerForm.btnCloseDetailsClick(Sender: TObject);
+begin
+  dlgOrderDetails.Close;
+end;
+
+procedure TCustomerForm.UpdateOrderStatusDisplay(const Status: string);
+var
+  TempFont: TFont;
+begin
+  // 创建临时字体对象
+  TempFont := TFont.Create;
+  try
+    // 复制原始字体属性
+    TempFont.Assign(lblOrderStatus.Font);
+    
+    // 设置粗体样式
+    TempFont.Style := [fsBold];
+    
+    // 设置颜色
+    TempFont.Color := TOrderStatusHelper.GetStatusColor(Status);
+    
+    // 将修改后的字体属性应用回标签字体
+    lblOrderStatus.Font.Assign(TempFont);
+  finally
+    TempFont.Free;
+  end;
 end;
 
 end.

@@ -786,4 +786,9 @@ object CustomerForm: TCustomerForm
     Left = 720
     Top = 330
   end
+  object qryOrderHistory: TFDQuery
+    Connection = DM.FDConnection
+    Left = 480
+    Top = 320
+  end
 end
