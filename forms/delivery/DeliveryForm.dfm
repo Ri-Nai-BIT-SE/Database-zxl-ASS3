@@ -144,9 +144,22 @@
           Margins.Top = 5
           Margins.Right = 5
           Margins.Bottom = 5
-          Caption = '更新信息'
+          Caption = #26356#26032#20449#24687
           TabOrder = 3
           OnClick = btnUpdateDeliveryInfoClick
+        end
+        object btnToggleStatus: TButton
+          Left = 435
+          Top = 270
+          Width = 225
+          Height = 51
+          Margins.Left = 5
+          Margins.Top = 5
+          Margins.Right = 5
+          Margins.Bottom = 5
+          Caption = #20999#25442#29366#24577
+          TabOrder = 4
+          OnClick = btnToggleStatusClick
         end
       end
     end
@@ -478,7 +491,11 @@
     Top = 135
   end
   object qryRevenue: TFDQuery
-    Left = 690
-    Top = 75
+    Left = 240
+    Top = 256
+  end
+  object qryToggleStatus: TFDQuery
+    Left = 440
+    Top = 256
   end
 end

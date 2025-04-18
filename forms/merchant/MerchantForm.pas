@@ -70,6 +70,9 @@ type
     lblAddress: TLabel;
     edtBusinessAddress: TEdit;
     btnUpdateMerchantInfo: TButton;
+    lblStatus: TLabel;
+    edtStatus: TEdit;
+    btnToggleStatus: TButton;
     // -- 新增日期筛选组件 --
     gboxDateRange: TGroupBox;
     lblStartDate: TLabel;
@@ -85,6 +88,7 @@ type
     lblOrdersValue: TLabel;
     lblTotalRevenue: TLabel;
     lblRevenueValue: TLabel;
+    qryToggleStatus: TFDQuery;
     
     procedure FormCreate(Sender: TObject);
     procedure btnAddProductClick(Sender: TObject);
@@ -101,6 +105,7 @@ type
     procedure TabRevenueShow(Sender: TObject);
     procedure btnUpdateMerchantInfoClick(Sender: TObject);
     procedure btnGenerateStatsClick(Sender: TObject);
+    procedure btnToggleStatusClick(Sender: TObject);
   private
     FMerchantID: Integer; // 添加商家ID字段
     selectedProductID: Integer; // 添加选中的商品ID
@@ -112,6 +117,7 @@ type
     procedure CalculateMerchantRevenue;
     procedure AdjustGridColumnWidths(AGrid: TDBGrid; const AColumnWidths: TDictionary<string, Integer>);
     procedure GetText(Sender: TField; var Text: String; DisplayText: Boolean);
+    procedure UpdateToggleStatusButton;
   public
     property CurrentMerchantID: Integer read FMerchantID write FMerchantID;
     class procedure ShowMerchantForm(MerchantID: Integer);
@@ -148,11 +154,13 @@ begin
   qryConfirmOrder.Connection := DM.FDConnection;
   qryConfirmDelivery.Connection := DM.FDConnection;
   qryRevenue.Connection := DM.FDConnection;
+  qryToggleStatus.Connection := DM.FDConnection;
 end;
+
 procedure TMerchantForm.LoadMerchantInfo;
 begin
   qryMerchantInfo.Close;
-  qryMerchantInfo.SQL.Text := 'SELECT name, contact_info, business_address FROM merchant WHERE merchant_id = :merchant_id';
+  qryMerchantInfo.SQL.Text := 'SELECT name, contact_info, business_address, status FROM merchant WHERE merchant_id = :merchant_id';
   qryMerchantInfo.ParamByName('merchant_id').AsInteger := FMerchantID;
   qryMerchantInfo.Open;
 
@@ -162,6 +170,10 @@ begin
     edtName.Text := qryMerchantInfo.FieldByName('name').AsString;
     edtContactInfo.Text := qryMerchantInfo.FieldByName('contact_info').AsString;
     edtBusinessAddress.Text := qryMerchantInfo.FieldByName('business_address').AsString;
+    edtStatus.Text := qryMerchantInfo.FieldByName('status').AsString;
+    
+    // 更新状态切换按钮
+    UpdateToggleStatusButton;
   end
   else
   begin
@@ -169,6 +181,7 @@ begin
     edtName.Text := '';
     edtContactInfo.Text := '';
     edtBusinessAddress.Text := '';
+    edtStatus.Text := '';
     ShowMessage('未能加载商家信息。');
   end;
 
@@ -180,6 +193,73 @@ begin
   //   ...
   // end;
 end;
+
+procedure TMerchantForm.UpdateToggleStatusButton;
+var
+  currentStatus: string;
+begin
+  currentStatus := edtStatus.Text;
+  
+  // 根据当前状态更新按钮文本和可用性
+  if currentStatus = 'active' then
+  begin
+    btnToggleStatus.Caption := '休息';
+    btnToggleStatus.Enabled := True;
+  end
+  else if currentStatus = 'inactive' then
+  begin
+    btnToggleStatus.Caption := '营业';
+    btnToggleStatus.Enabled := True;
+  end
+  else if currentStatus = 'pending_approval' then
+  begin
+    btnToggleStatus.Caption := '待审批';
+    btnToggleStatus.Enabled := False;
+  end
+  else
+  begin
+    btnToggleStatus.Caption := '切换状态';
+    btnToggleStatus.Enabled := False;
+  end;
+end;
+
+procedure TMerchantForm.btnToggleStatusClick(Sender: TObject);
+var
+  currentStatus, newStatus: string;
+begin
+  currentStatus := edtStatus.Text;
+  
+  // 确定新状态
+  if currentStatus = 'active' then
+    newStatus := 'inactive'
+  else if currentStatus = 'inactive' then
+    newStatus := 'active'
+  else
+    Exit;  // 其他状态不处理
+    
+  try
+    // 更新数据库中的状态
+    qryToggleStatus.Close;
+    qryToggleStatus.SQL.Text := 'UPDATE merchant SET status = :status WHERE merchant_id = :merchant_id';
+    qryToggleStatus.ParamByName('status').AsString := newStatus;
+    qryToggleStatus.ParamByName('merchant_id').AsInteger := FMerchantID;
+    qryToggleStatus.ExecSQL;
+    
+    // 更新界面显示
+    edtStatus.Text := newStatus;
+    UpdateToggleStatusButton;
+    
+    // 显示确认消息
+    if newStatus = 'active' then
+      ShowMessage('已成功切换为营业状态')
+    else
+      ShowMessage('已成功切换为休息状态');
+  except
+    on E: Exception do
+      ShowMessage('状态切换失败: ' + E.Message);
+  end;
+end;
+
 procedure TMerchantForm.LoadProducts;
 var
   ProductWidths: TDictionary<string, Integer>;
@@ -216,10 +296,10 @@ begin
     try
       // 定义商品网格列宽
       ProductWidths.AddOrSetValue('商品编号', 80);
-      ProductWidths.AddOrSetValue('商品名称', 150);
-      ProductWidths.AddOrSetValue('价格', 80);
-      ProductWidths.AddOrSetValue('库存', 70);
-      ProductWidths.AddOrSetValue('描述', 220);
+      ProductWidths.AddOrSetValue('商品名称', 240);
+      ProductWidths.AddOrSetValue('价格', 100);
+      ProductWidths.AddOrSetValue('库存', 100);
+      ProductWidths.AddOrSetValue('描述', 600);
       
       AdjustGridColumnWidths(gridProducts, ProductWidths);
     finally
@@ -227,6 +307,7 @@ begin
     end;
   end;
 end;
+
 procedure TMerchantForm.LoadOrders;
 var
   OrderWidths: TDictionary<string, Integer>;
@@ -267,6 +348,7 @@ begin
     end;
   end;
 end;
+
 procedure TMerchantForm.btnAddProductClick(Sender: TObject);
 begin
   qryAddProduct.Close;
@@ -279,6 +361,7 @@ begin
   qryAddProduct.ExecSQL;
   LoadProducts; // 重新加载商品信息以显示更新
 end;
+
 procedure TMerchantForm.btnUpdateProductClick(Sender: TObject);
 var
   cleanDescription: string;
@@ -295,6 +378,7 @@ begin
   qryUpdateProduct.ExecSQL;
   LoadProducts;
 end;
+
 procedure TMerchantForm.btnDeleteProductClick(Sender: TObject);
 begin
   if MessageDlg('确定要删除该商品吗？', mtConfirmation, [mbYes, mbNo], 0) = mrYes then
@@ -316,6 +400,7 @@ begin
   qryConfirmOrder.ExecSQL;
   LoadOrders; // 重新加载订单信息以显示更新
 end;
+
 procedure TMerchantForm.btnConfirmDeliveryClick(Sender: TObject);
 begin
   qryConfirmDelivery.Close;
@@ -371,6 +456,7 @@ begin
   TotalOrders := qryRevenue.FieldByName('total_orders').AsInteger;
   lblOrdersValue.Caption := IntToStr(TotalOrders) + ' 单';
 end;
+
 procedure TMerchantForm.FormShow(Sender: TObject);
 begin
   // 需要手动调用每个标签页的Show方法
@@ -443,6 +529,8 @@ begin
     qryConfirmDelivery := TFDQuery.Create(Self);
   if not Assigned(qryRevenue) then
     qryRevenue := TFDQuery.Create(Self);
+  if not Assigned(qryToggleStatus) then
+    qryToggleStatus := TFDQuery.Create(Self);
     
   // 确保数据源已创建
   if not Assigned(dsMerchantInfo) then

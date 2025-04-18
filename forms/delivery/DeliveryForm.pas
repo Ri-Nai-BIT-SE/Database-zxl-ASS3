@@ -58,6 +58,7 @@ type
     lblStatus: TLabel;
     edtStatus: TEdit;
     btnUpdateDeliveryInfo: TButton;
+    btnToggleStatus: TButton;
     
     // -- 收益统计相关组件 --
     gboxDateRange: TGroupBox;
@@ -74,6 +75,7 @@ type
     pnlOrderStats: TPanel;
     lblTotalOrders: TLabel;
     lblOrdersValue: TLabel;
+    qryToggleStatus: TFDQuery;
     
     procedure FormCreate(Sender: TObject);
     procedure btnAcceptOrderClick(Sender: TObject);
@@ -85,6 +87,7 @@ type
     procedure TabRevenueShow(Sender: TObject);
     procedure btnUpdateDeliveryInfoClick(Sender: TObject);
     procedure btnGenerateStatsClick(Sender: TObject);
+    procedure btnToggleStatusClick(Sender: TObject);
     
   private
     FDeliveryID: Integer; // 外卖员ID字段
@@ -95,6 +98,7 @@ type
     procedure CalculateDeliveryRevenue;
     procedure AdjustGridColumnWidths(AGrid: TDBGrid; const AColumnWidths: TDictionary<string, Integer>);
     procedure GetText(Sender: TField; var Text: String; DisplayText: Boolean);
+    procedure UpdateToggleStatusButton;
   public
     property CurrentDeliveryID: Integer read FDeliveryID write FDeliveryID;
     class procedure ShowDeliveryForm(DeliveryID: Integer);
@@ -127,6 +131,7 @@ begin
   qryAcceptOrder.Connection := DM.FDConnection;
   qryConfirmDelivery.Connection := DM.FDConnection;
   qryRevenue.Connection := DM.FDConnection;
+  qryToggleStatus.Connection := DM.FDConnection;
 end;
 
 procedure TDeliveryForm.LoadDeliveryInfo;
@@ -142,6 +147,9 @@ begin
     edtName.Text := qryDeliveryInfo.FieldByName('name').AsString;
     edtContactInfo.Text := qryDeliveryInfo.FieldByName('contact_info').AsString;
     edtStatus.Text := qryDeliveryInfo.FieldByName('status').AsString;
+    
+    // 更新状态切换按钮
+    UpdateToggleStatusButton;
   end
   else
   begin
@@ -150,6 +158,82 @@ begin
     edtContactInfo.Text := '';
     edtStatus.Text := '';
     ShowMessage('未能加载外卖员信息。');
+  end;
+end;
+
+procedure TDeliveryForm.UpdateToggleStatusButton;
+var
+  currentStatus: string;
+begin
+  currentStatus := edtStatus.Text;
+  
+  // 根据当前状态更新按钮文本和可用性
+  if currentStatus = 'active_available' then
+  begin
+    btnToggleStatus.Caption := '下班';
+    btnToggleStatus.Enabled := True;
+  end
+  else if currentStatus = 'inactive' then
+  begin
+    btnToggleStatus.Caption := '上班';
+    btnToggleStatus.Enabled := True;
+  end
+  else if currentStatus = 'active_delivering' then
+  begin
+    btnToggleStatus.Caption := '送货中';
+    btnToggleStatus.Enabled := False;
+  end
+  else if currentStatus = 'pending_approval' then
+  begin
+    btnToggleStatus.Caption := '待审批';
+    btnToggleStatus.Enabled := False;
+  end
+  else if currentStatus = 'rejected' then
+  begin
+    btnToggleStatus.Caption := '已拒绝';
+    btnToggleStatus.Enabled := False;
+  end
+  else
+  begin
+    btnToggleStatus.Caption := '切换状态';
+    btnToggleStatus.Enabled := False;
+  end;
+end;
+
+procedure TDeliveryForm.btnToggleStatusClick(Sender: TObject);
+var
+  currentStatus, newStatus: string;
+begin
+  currentStatus := edtStatus.Text;
+  
+  // 确定新状态
+  if currentStatus = 'active_available' then
+    newStatus := 'inactive'
+  else if currentStatus = 'inactive' then
+    newStatus := 'active_available'
+  else
+    Exit;  // 其他状态不处理
+    
+  try
+    // 更新数据库中的状态
+    qryToggleStatus.Close;
+    qryToggleStatus.SQL.Text := 'UPDATE delivery_man SET status = :status WHERE delivery_man_id = :delivery_id';
+    qryToggleStatus.ParamByName('status').AsString := newStatus;
+    qryToggleStatus.ParamByName('delivery_id').AsInteger := FDeliveryID;
+    qryToggleStatus.ExecSQL;
+    
+    // 更新界面显示
+    edtStatus.Text := newStatus;
+    UpdateToggleStatusButton;
+    
+    // 显示确认消息
+    if newStatus = 'active_available' then
+      ShowMessage('已成功上班，现在可以接单了！')
+    else
+      ShowMessage('已成功下班，休息一下吧！');
+  except
+    on E: Exception do
+      ShowMessage('状态切换失败: ' + E.Message);
   end;
 end;
 
@@ -355,7 +439,9 @@ begin
     qryConfirmDelivery := TFDQuery.Create(Self);
   if not Assigned(qryRevenue) then
     qryRevenue := TFDQuery.Create(Self);
-    
+  if not Assigned(qryToggleStatus) then
+    qryToggleStatus := TFDQuery.Create(Self);
+  
   // 确保数据源已创建
   if not Assigned(dsDeliveryInfo) then
   begin
