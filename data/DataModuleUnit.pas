@@ -3,7 +3,7 @@
 interface
 
 uses
-    System.SysUtils, System.Classes,
+    System.SysUtils, System.Classes, System.IniFiles,
     FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.UI.Intf,
     FireDAC.Phys.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool, FireDAC.Stan.Async,
     FireDAC.Phys, FireDAC.VCLUI.Wait, Data.DB, FireDAC.Comp.Client,
@@ -21,11 +21,20 @@ type
     private
         { Private declarations }
         FCurrentRole: TRoleType;
+        FConfigFile: string;
         
         // 设置不同角色的连接参数
         procedure SetConnectionParams(const Role: TRoleType);
+        // 读取配置文件
+        function ReadConfigValue(const Section, Key, DefaultValue: string): string;
     public
         { Public declarations }
+        // 构造函数
+        constructor Create(AOwner: TComponent); override;
+        
+        // 设置配置文件路径
+        procedure SetConfigFile(const FileName: string);
+        
         // 获取当前连接的角色
         property CurrentRole: TRoleType read FCurrentRole;
         
@@ -55,42 +64,80 @@ implementation
 
 { TDataModuleUnit }
 
+constructor TDataModuleUnit.Create(AOwner: TComponent);
+begin
+    inherited Create(AOwner);
+    // 默认配置文件路径
+    FConfigFile := ExtractFilePath(ParamStr(0)) + 'config.ini';
+end;
+
+procedure TDataModuleUnit.SetConfigFile(const FileName: string);
+begin
+    FConfigFile := FileName;
+end;
+
+function TDataModuleUnit.ReadConfigValue(const Section, Key, DefaultValue: string): string;
+var
+    IniFile: TIniFile;
+begin
+    Result := DefaultValue;
+    if FileExists(FConfigFile) then
+    begin
+        try
+            IniFile := TIniFile.Create(FConfigFile);
+            try
+                Result := IniFile.ReadString(Section, Key, DefaultValue);
+            finally
+                IniFile.Free;
+            end;
+        except
+            on E: Exception do
+            begin
+                ShowMessage('读取配置文件失败: ' + E.Message);
+            end;
+        end;
+    end
+    else
+        ShowMessage('配置文件不存在: ' + FConfigFile);
+end;
+
 procedure TDataModuleUnit.SetConnectionParams(const Role: TRoleType);
 var
-    Username, Password: string;
+    Username, Password, RoleSection: string;
+    Host, Port, Database: string;
 begin
     // 设置数据库连接参数
     FDConnection.Connected := False;
     FDConnection.Params.Clear;
     
-    // 所有角色连接都使用同一数据库
-    FDConnection.Params.Add('Database=db_takeout');
-    FDConnection.Params.Add('Server=192.168.202.129');
-    FDConnection.Params.Add('Port=26000');
+    // 从配置文件读取通用数据库连接参数
+    Host := ReadConfigValue('Database', 'Host', '192.168.202.131');
+    Port := ReadConfigValue('Database', 'Port', '26000');
+    Database := ReadConfigValue('Database', 'Database', 'db_takeout');
+    
+    // 设置数据库连接参数
+    FDConnection.Params.Add('Database=' + Database);
+    FDConnection.Params.Add('Server=' + Host);
+    FDConnection.Params.Add('Port=' + Port);
     FDConnection.Params.Add('DriverID=PG');
     
     // 根据角色设置用户名和密码
     case Role of
-        rtCustomer:
-        begin
-            Username := 'customer';
-            Password := 'customer@123';
-        end;
-        rtMerchant:
-        begin
-            Username := 'merchant';
-            Password := 'merchant@123';
-        end;
-        rtDelivery:
-        begin
-            Username := 'delivery_man';
-            Password := 'delivery_man@123';
-        end;
-        rtAdmin:
-        begin
-            Username := 'takeout_admin';
-            Password := 'takeout_admin@123';
-        end;
+        rtCustomer: RoleSection := 'Customer';
+        rtMerchant: RoleSection := 'Merchant';
+        rtDelivery: RoleSection := 'Delivery';
+        rtAdmin: RoleSection := 'Admin';
+    end;
+    
+    // 从配置文件读取用户名和密码
+    Username := ReadConfigValue(RoleSection, 'Username', '');
+    Password := ReadConfigValue(RoleSection, 'Password', '');
+    
+    // 如果配置文件中没有设置，使用默认值
+    if Username = '' then
+    begin
+        ShowMessage('配置文件中没有设置用户名');
+        Exit;
     end;
     
     FDConnection.Params.Add('User_Name=' + Username);

@@ -4,11 +4,11 @@ object DataModuleUnit: TDataModuleUnit
   PixelsPerInch = 120
   object FDConnection: TFDConnection
     Params.Strings = (
-      'User_Name=takeout_admin'
-      'Database=db_takeout'
-      'Password=takeout_admin@123'
-      'Port=26000'
-      'Server=192.168.202.129'
+      'User_Name=username'
+      'Database=database'
+      'Password=password'
+      'Port=5432'
+      'Server=localhost'
       'DriverID=PG')
     LoginPrompt = False
     Left = 60
