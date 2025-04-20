@@ -50,7 +50,6 @@ type
     dsOrder: TDataSource;
     qryOrder: TFDQuery;
     pnlOrderFilter: TPanel;
-    lblOrderStatus: TLabel;
     cmbOrderStatus: TComboBox;
     btnFilterOrder: TButton;
     btnResetOrder: TButton;
@@ -80,6 +79,10 @@ type
     btnResetCustomer: TButton;
     dsCustomer: TDataSource;
     qryCustomer: TFDQuery;
+    // 订单详情相关组件
+    qryOrderDetails: TFDQuery;
+    qryOrderHistory: TFDQuery;
+    btnOrderDetails: TButton;
     
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -107,9 +110,28 @@ type
     procedure qryDeliveryAfterOpen(DataSet: TDataSet);
     procedure qryOrderAfterOpen(DataSet: TDataSet);
     procedure qryCustomerAfterOpen(DataSet: TDataSet);
+    procedure btnOrderDetailsClick(Sender: TObject);
+    procedure btnCloseDetailsClick(Sender: TObject);
+    procedure gridOrderCellClick(Column: TColumn);
   private
+    // 订单详情相关字段和方法
+    selectedOrderID: Integer;
+    dlgOrderDetails: TForm;
+    pnlOrderInfo: TPanel;
+    lblOrderID: TLabel;
+    lblOrderStatus: TLabel;
+    lblOrderTime: TLabel;
+    lblCustomerInfo: TLabel;
+    lblMerchantInfo: TLabel;
+    lblDeliveryManInfo: TLabel;
+    gridOrderItems: TStringGrid;
+    memoOrderHistory: TMemo;
+    btnCloseDetails: TButton;
     procedure ConnectToDatabase;
     procedure AdjustGridColumnWidths(AGrid: TDBGrid; const AColumnWidths: TDictionary<string, Integer>);
+    procedure InitializeOrderDetailsDialog;
+    procedure ShowEnhancedOrderDetails(OrderID: Integer);
+    procedure LoadOrderStatusHistory(OrderID: Integer);
   public
     class procedure ShowAdminForm;
     function GetStatusDescription(const Status: string; const MerchantID: Integer = 0; const DeliveryManID: Integer = 0): string;
@@ -156,6 +178,13 @@ begin
   qryDelivery.Connection := DM.FDConnection;
   qryCustomer.Connection := DM.FDConnection;
   qryOrder.Connection := DM.FDConnection;
+
+  // 为订单详情相关的查询组件设置连接
+  if Assigned(qryOrderDetails) then
+    qryOrderDetails.Connection := DM.FDConnection;
+  
+  if Assigned(qryOrderHistory) then
+    qryOrderHistory.Connection := DM.FDConnection;
 end;
 
 procedure TAdminForm.FormCreate(Sender: TObject);
@@ -194,6 +223,23 @@ begin
   // 设置默认日期范围
   dtpStartDate.Date := Date - 30;  // 默认显示过去30天
   dtpEndDate.Date := Date;         // 默认结束日期为今天
+
+  // 初始化订单详情相关变量
+  selectedOrderID := -1;
+  
+  // 确保查询组件已创建
+  if not Assigned(qryOrderDetails) then
+    qryOrderDetails := TFDQuery.Create(Self);
+  
+  if not Assigned(qryOrderHistory) then
+    qryOrderHistory := TFDQuery.Create(Self);
+    
+  // 确保设置连接
+  if Assigned(qryOrderDetails) then
+    qryOrderDetails.Connection := DM.FDConnection;
+  
+  if Assigned(qryOrderHistory) then
+    qryOrderHistory.Connection := DM.FDConnection;
 end;
 
 procedure TAdminForm.FormShow(Sender: TObject);
@@ -324,44 +370,61 @@ begin
 end;
 
 procedure TAdminForm.TabOrderShow(Sender: TObject);
-var
-  SQL: string;
-  OrderWidths: TDictionary<string, Integer>;
 begin
-  // Use v_order_details view
-  SQL := 'SELECT order_id, customer_name, merchant_name, ' +
-         'COALESCE(delivery_man_name, ''未分配'') as delivery_name, total_amount, order_status as status, ' + // Use aliases from the view/query
-         'created_at, updated_at ' +
-         'FROM v_order_details';
-
-  if cmbOrderStatus.Text <> '' then
-    // Filter by order_status from the view
-    SQL := SQL + ' WHERE order_status = ' + QuotedStr(cmbOrderStatus.Text);
-
-  SQL := SQL + ' ORDER BY order_id';
-
+  // 查询所有订单
   qryOrder.Close;
-  qryOrder.SQL.Text := SQL;
-  qryOrder.Open;
-
-  // Adjust column widths after opening the query
-  if qryOrder.Active then
+  qryOrder.SQL.Text := 
+    'SELECT ' +
+    '  o.order_id, ' +
+    '  o.customer_id, ' +
+    '  o.merchant_id, ' +
+    '  o.delivery_man_id, ' +
+    '  o.status, ' +
+    '  o.created_at, ' +
+    '  o.updated_at ' +
+    'FROM order_info o ';
+  
+  // 添加筛选条件
+  if cmbOrderStatus.Text <> '' then
   begin
-    OrderWidths := TDictionary<string, Integer>.Create;
-    try
-      // Define desired widths for order grid (use aliases/final names)
-      OrderWidths.AddOrSetValue('order_id', 70);
-      OrderWidths.AddOrSetValue('customer_name', 120);
-      OrderWidths.AddOrSetValue('merchant_name', 150);
-      OrderWidths.AddOrSetValue('delivery_name', 120); // Alias from COALESCE
-      OrderWidths.AddOrSetValue('total_amount', 90);
-      OrderWidths.AddOrSetValue('status', 100);        // Alias from order_status
-      OrderWidths.AddOrSetValue('created_at', 140);
-      OrderWidths.AddOrSetValue('updated_at', 140);
-
-      AdjustGridColumnWidths(gridOrder, OrderWidths);
-    finally
-      OrderWidths.Free;
+    qryOrder.SQL.Add('WHERE o.status = :status');
+    qryOrder.ParamByName('status').AsString := cmbOrderStatus.Text;
+  end;
+  
+  qryOrder.SQL.Add('ORDER BY o.created_at DESC');
+  qryOrder.Open;
+  
+  // 设置列标题
+  if qryOrder.Active and (qryOrder.FieldCount > 0) then
+  begin
+    qryOrder.FieldByName('order_id').DisplayLabel := '订单编号';
+    qryOrder.FieldByName('customer_id').DisplayLabel := '顾客编号';
+    qryOrder.FieldByName('merchant_id').DisplayLabel := '商家编号';
+    qryOrder.FieldByName('delivery_man_id').DisplayLabel := '配送员编号';
+    qryOrder.FieldByName('status').DisplayLabel := '状态';
+    qryOrder.FieldByName('created_at').DisplayLabel := '创建时间';
+    qryOrder.FieldByName('updated_at').DisplayLabel := '更新时间';
+  end;
+  
+  // 调整列宽...
+  
+  // 设置网格单元格点击事件
+  gridOrder.OnCellClick := gridOrderCellClick;
+  
+  // 添加订单详情按钮
+  if not Assigned(btnOrderDetails) then
+  begin
+    btnOrderDetails := TButton.Create(Self);
+    with btnOrderDetails do
+    begin
+      Parent := pnlOrderFilter;
+      Caption := '订单详情';
+      Left := btnResetOrder.Left + btnResetOrder.Width + 20;
+      Top := btnResetOrder.Top;
+      Width := 120;
+      Height := btnResetOrder.Height;
+      OnClick := btnOrderDetailsClick;
+      Enabled := False; // 初始状态下禁用按钮
     end;
   end;
 end;
@@ -571,6 +634,286 @@ end;
 procedure TAdminForm.FormatOrderTimeline(const JsonStr: string; var FormattedText: string);
 begin
   TOrderStatusHelper.FormatOrderTimeline(JsonStr, FormattedText);
+end;
+
+procedure TAdminForm.gridOrderCellClick(Column: TColumn);
+begin
+  if not Assigned(gridOrder.DataSource.DataSet) then
+    Exit;
+    
+  selectedOrderID := gridOrder.DataSource.DataSet.FieldByName('order_id').AsInteger;
+  // 启用订单详情按钮
+  btnOrderDetails.Enabled := True;
+end;
+
+procedure TAdminForm.InitializeOrderDetailsDialog;
+begin
+  if not Assigned(dlgOrderDetails) then
+  begin
+    dlgOrderDetails := TForm.Create(Self);
+    with dlgOrderDetails do
+    begin
+      Caption := '订单详情';
+      Width := 700;
+      Height := 600;
+      Position := poScreenCenter;
+      BorderStyle := bsDialog;
+      
+      pnlOrderInfo := TPanel.Create(dlgOrderDetails);
+      with pnlOrderInfo do
+      begin
+        Parent := dlgOrderDetails;
+        Align := alTop;
+        Height := 180;
+        BevelOuter := bvNone;
+        
+        lblOrderID := TLabel.Create(pnlOrderInfo);
+        with lblOrderID do
+        begin
+          Parent := pnlOrderInfo;
+          Left := 10;
+          Top := 10;
+          Font.Style := [fsBold];
+        end;
+        
+        lblOrderStatus := TLabel.Create(pnlOrderInfo);
+        with lblOrderStatus do
+        begin
+          Parent := pnlOrderInfo;
+          Left := 10;
+          Top := 35;
+        end;
+        
+        lblOrderTime := TLabel.Create(pnlOrderInfo);
+        with lblOrderTime do
+        begin
+          Parent := pnlOrderInfo;
+          Left := 10;
+          Top := 60;
+        end;
+        
+        lblCustomerInfo := TLabel.Create(pnlOrderInfo);
+        with lblCustomerInfo do
+        begin
+          Parent := pnlOrderInfo;
+          Left := 10;
+          Top := 85;
+        end;
+        
+        lblMerchantInfo := TLabel.Create(pnlOrderInfo);
+        with lblMerchantInfo do
+        begin
+          Parent := pnlOrderInfo;
+          Left := 10;
+          Top := 110;
+        end;
+        
+        lblDeliveryManInfo := TLabel.Create(pnlOrderInfo);
+        with lblDeliveryManInfo do
+        begin
+          Parent := pnlOrderInfo;
+          Left := 10;
+          Top := 135;
+        end;
+      end;
+      
+      gridOrderItems := TStringGrid.Create(dlgOrderDetails);
+      with gridOrderItems do
+      begin
+        Parent := dlgOrderDetails;
+        Align := alTop;
+        Height := 150;
+        Top := 180;
+        FixedRows := 1;
+        ColCount := 5;
+        RowCount := 2;
+        Options := Options + [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRowSelect];
+        
+        // 设置表头
+        Cells[0, 0] := '商品编号';
+        Cells[1, 0] := '商品名称';
+        Cells[2, 0] := '单价';
+        Cells[3, 0] := '数量';
+        Cells[4, 0] := '小计';
+      end;
+      
+      memoOrderHistory := TMemo.Create(dlgOrderDetails);
+      with memoOrderHistory do
+      begin
+        Parent := dlgOrderDetails;
+        Align := alClient;
+        ReadOnly := True;
+        ScrollBars := ssVertical;
+      end;
+      
+      btnCloseDetails := TButton.Create(dlgOrderDetails);
+      with btnCloseDetails do
+      begin
+        Parent := dlgOrderDetails;
+        Align := alBottom;
+        Caption := '关闭';
+        Height := 30;
+        OnClick := btnCloseDetailsClick;
+      end;
+    end;
+  end;
+end;
+
+procedure TAdminForm.ShowEnhancedOrderDetails(OrderID: Integer);
+var
+  TotalAmount: Double;
+  CurrentStatus: string;
+  MerchantID, DeliveryManID: Integer;
+begin
+  InitializeOrderDetailsDialog;
+  
+  // 确保查询组件已创建并连接到数据库
+  if not Assigned(qryOrderDetails) or not Assigned(qryOrderDetails.Connection) then
+  begin
+    if not Assigned(qryOrderDetails) then
+      qryOrderDetails := TFDQuery.Create(Self);
+    qryOrderDetails.Connection := DM.FDConnection;
+  end;
+  
+  if not Assigned(qryOrderHistory) or not Assigned(qryOrderHistory.Connection) then
+  begin
+    if not Assigned(qryOrderHistory) then
+      qryOrderHistory := TFDQuery.Create(Self);
+    qryOrderHistory.Connection := DM.FDConnection;
+  end;
+  
+  // 查询订单基本信息
+  with qryOrderDetails do
+  begin
+    Close;
+    SQL.Text := 
+      'SELECT o.order_id, o.status, o.created_at, o.updated_at, ' +
+      'c.name AS customer_name, c.contact_info AS customer_contact, c.address AS customer_address, ' +
+      'm.name AS merchant_name, m.contact_info AS merchant_contact, m.business_address AS merchant_address, ' +
+      'd.name AS delivery_man_name, d.contact_info AS delivery_man_contact, ' +
+      'o.merchant_id, o.customer_id, o.delivery_man_id ' +
+      'FROM order_info o ' +
+      'JOIN customer c ON o.customer_id = c.customer_id ' +
+      'JOIN merchant m ON o.merchant_id = m.merchant_id ' +
+      'LEFT JOIN delivery_man d ON o.delivery_man_id = d.delivery_man_id ' +
+      'WHERE o.order_id = :order_id';
+    ParamByName('order_id').AsInteger := OrderID;
+    Open;
+    
+    if RecordCount = 0 then
+    begin
+      ShowMessage('未找到订单信息');
+      Exit;
+    end;
+    
+    // 更新订单基本信息显示
+    CurrentStatus := FieldByName('status').AsString;
+    MerchantID := FieldByName('merchant_id').AsInteger;
+    DeliveryManID := 0;
+    if not FieldByName('delivery_man_id').IsNull then
+      DeliveryManID := FieldByName('delivery_man_id').AsInteger;
+    
+    lblOrderID.Caption := Format('订单编号: #%d', [OrderID]);
+    lblOrderStatus.Caption := Format('状态: %s', [GetStatusDescription(CurrentStatus, MerchantID, DeliveryManID)]);
+    UpdateOrderStatusDisplay(lblOrderStatus, CurrentStatus);
+    lblOrderTime.Caption := Format('创建时间: %s', [FormatDateTime('yyyy-mm-dd hh:nn:ss', FieldByName('created_at').AsDateTime)]);
+    lblCustomerInfo.Caption := Format('顾客: %s (%s) - 地址: %s', 
+      [FieldByName('customer_name').AsString, 
+      FieldByName('customer_contact').AsString,
+      FieldByName('customer_address').AsString]);
+    
+    lblMerchantInfo.Caption := Format('商家: %s (%s) - 地址: %s', 
+      [FieldByName('merchant_name').AsString, 
+      FieldByName('merchant_contact').AsString,
+      FieldByName('merchant_address').AsString]);
+    
+    if not FieldByName('delivery_man_id').IsNull then
+      lblDeliveryManInfo.Caption := Format('配送员: %s (%s)', 
+        [FieldByName('delivery_man_name').AsString, 
+        FieldByName('delivery_man_contact').AsString])
+    else
+      lblDeliveryManInfo.Caption := '配送员: 暂未分配';
+  end;
+  
+  // 查询订单商品明细
+  with qryOrderDetails do
+  begin
+    Close;
+    SQL.Text := 
+      'SELECT oi.product_id, p.name AS product_name, ' +
+      'oi.quantity, oi.price_at_order ' +
+      'FROM order_item oi ' +
+      'JOIN product p ON oi.product_id = p.product_id ' +
+      'WHERE oi.order_id = :order_id';
+    ParamByName('order_id').AsInteger := OrderID;
+    Open;
+    
+    // 更新商品明细表格
+    gridOrderItems.RowCount := RecordCount + 1;
+    TotalAmount := 0;
+    
+    First;
+    var Row := 1;
+    while not Eof do
+    begin
+      gridOrderItems.Cells[0, Row] := FieldByName('product_id').AsString;
+      gridOrderItems.Cells[1, Row] := FieldByName('product_name').AsString;
+      gridOrderItems.Cells[2, Row] := Format('%.2f', [FieldByName('price_at_order').AsFloat]);
+      gridOrderItems.Cells[3, Row] := FieldByName('quantity').AsString;
+      gridOrderItems.Cells[4, Row] := Format('%.2f', 
+        [FieldByName('price_at_order').AsFloat * FieldByName('quantity').AsInteger]);
+      
+      TotalAmount := TotalAmount + (FieldByName('price_at_order').AsFloat * FieldByName('quantity').AsInteger);
+      Inc(Row);
+      Next;
+    end;
+  end;
+  
+  // 加载订单状态历史
+  LoadOrderStatusHistory(OrderID);
+  
+  // 显示对话框
+  dlgOrderDetails.ShowModal;
+end;
+
+procedure TAdminForm.LoadOrderStatusHistory(OrderID: Integer);
+begin
+  qryOrderHistory.Close;
+  qryOrderHistory.SQL.Text := 
+    'SELECT order_data, change_timestamp ' +
+    'FROM order_log ' +
+    'WHERE order_id = :order_id ' +
+    'ORDER BY change_timestamp ASC';
+  qryOrderHistory.ParamByName('order_id').AsInteger := OrderID;
+  qryOrderHistory.Open;
+  
+  memoOrderHistory.Clear;
+  memoOrderHistory.Lines.Add('订单状态变更历史:');
+  memoOrderHistory.Lines.Add('');
+  
+  while not qryOrderHistory.Eof do
+  begin
+    var FormattedText: string;
+    FormatOrderTimeline(qryOrderHistory.FieldByName('order_data').AsString, FormattedText);
+    memoOrderHistory.Lines.Add(FormattedText);
+    qryOrderHistory.Next;
+  end;
+end;
+
+procedure TAdminForm.btnOrderDetailsClick(Sender: TObject);
+begin
+  if selectedOrderID <= 0 then
+  begin
+    ShowMessage('请先选择一个订单');
+    Exit;
+  end;
+  
+  ShowEnhancedOrderDetails(selectedOrderID);
+end;
+
+procedure TAdminForm.btnCloseDetailsClick(Sender: TObject);
+begin
+  dlgOrderDetails.Close;
 end;
 
 end. 
