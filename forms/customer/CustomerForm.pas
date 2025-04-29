@@ -745,6 +745,7 @@ var
   ProductName: string;
   Price: Double;
   Quantity: Integer;
+  AvailableStock: Integer;
   i: Integer;
   Found: Boolean;
 begin
@@ -770,13 +771,29 @@ begin
   ProductID := gridProducts.DataSource.DataSet.FieldByName('商品编号').AsInteger;
   ProductName := gridProducts.DataSource.DataSet.FieldByName('商品名称').AsString;
   Price := gridProducts.DataSource.DataSet.FieldByName('价格').AsFloat;
+  AvailableStock := gridProducts.DataSource.DataSet.FieldByName('库存').AsInteger;
   
-  // 检查购物车中是否已有该商品
+  // 检查库存是否足够
+  if Quantity > AvailableStock then
+  begin
+    ShowMessage(Format('库存不足，当前库存: %d, 您想购买: %d', [AvailableStock, Quantity]));
+    Exit;
+  end;
+  
+  // 检查购物车中已有的同商品数量，确保总数不超过库存
   Found := False;
   for i := 0 to FCart.Count - 1 do
   begin
     if FCart[i].ProductID = ProductID then
     begin
+      // 计算加入后的总数量
+      if (FCart[i].Quantity + Quantity) > AvailableStock then
+      begin
+        ShowMessage(Format('库存不足，当前库存: %d, 购物车已有: %d, 您想再加: %d', 
+          [AvailableStock, FCart[i].Quantity, Quantity]));
+        Exit;
+      end;
+      
       FCart[i].Quantity := FCart[i].Quantity + Quantity;
       Found := True;
       Break;
