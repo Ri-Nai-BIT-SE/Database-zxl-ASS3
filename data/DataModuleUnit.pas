@@ -111,7 +111,7 @@ begin
     FDConnection.Params.Clear;
     
     // 从配置文件读取通用数据库连接参数
-    Host := ReadConfigValue('Database', 'Host', '192.168.202.131');
+    Host := ReadConfigValue('Database', 'Host', '192.168.202.111');
     Port := ReadConfigValue('Database', 'Port', '26000');
     Database := ReadConfigValue('Database', 'Database', 'db_takeout');
     
