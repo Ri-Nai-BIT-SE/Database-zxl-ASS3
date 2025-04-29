@@ -271,10 +271,22 @@ end;
 procedure TDeliveryForm.LoadOrders;
 var
   OrderWidths: TDictionary<string, Integer>;
+  i: Integer; 
 begin
-  qryOrders.Close;
+  // 确保清除并重新创建数据源
+  if Assigned(dsOrders) then
+  begin
+    if gridOrders.DataSource = dsOrders then
+      gridOrders.DataSource := nil;
+    FreeAndNil(dsOrders);
+  end;
   
-  // 未接单：查询状态为processed的订单，即等待外卖员接单的订单
+  dsOrders := TDataSource.Create(Self);
+  dsOrders.DataSet := qryOrders;
+  gridOrders.DataSource := dsOrders;
+
+  // 使用新的查询语句
+  qryOrders.Close;
   qryOrders.SQL.Text := 
     'SELECT ' +
     '  order_id AS 订单编号, ' +
@@ -285,15 +297,29 @@ begin
     '  created_at AS 创建时间, ' +
     '  updated_at AS 更新时间 ' +
     'FROM v_order_details ' +
-    // 'WHERE order_status = ''processed'' ' +
-    // 'AND delivery_man_id IS NULL ' +
+    'WHERE order_status = ''processed'' ' +
+    'AND delivery_man_id IS NULL ' +
     'ORDER BY created_at DESC';
-
-  qryOrders.Open;
-
-  // 调整列宽度
-  if qryOrders.Active then
-  begin
+  
+  try
+    qryOrders.Open;
+    
+    // 调试信息
+    if qryOrders.RecordCount > 0 then
+    begin
+      qryOrders.First;
+      
+      // 显示所有字段名
+      var FieldNames := '';
+      for i := 0 to qryOrders.FieldCount - 1 do
+        FieldNames := FieldNames + qryOrders.Fields[i].FieldName + ', ';
+    end;
+    
+    // 确保网格可见并启用
+    gridOrders.Visible := True;
+    gridOrders.Enabled := True;
+    
+    // 设置列宽
     OrderWidths := TDictionary<string, Integer>.Create;
     try
       // 定义订单网格列宽
@@ -309,6 +335,14 @@ begin
     finally
       OrderWidths.Free;
     end;
+    
+    // 强制更新显示
+    gridOrders.Repaint;
+    Application.ProcessMessages;
+    
+  except
+    on E: Exception do
+      ShowMessage('查询错误: ' + E.Message);
   end;
 end;
 
@@ -429,6 +463,22 @@ end;
 
 procedure TDeliveryForm.TabOrderShow(Sender: TObject);
 begin
+  // 确保面板可见
+  pnlOrders.Visible := True;
+  
+  // 确保订单网格可见
+  if not Assigned(gridOrders) then
+  begin
+    gridOrders := TDBGrid.Create(Self);
+    gridOrders.Parent := pnlOrders;
+    gridOrders.Align := alClient;
+  end;
+  
+  gridOrders.Visible := True;
+  gridOrders.Enabled := True;
+  gridOrders.OnCellClick := gridOrdersCellClick;
+  
+  // 加载订单
   LoadOrders;
   
   // 添加订单详情按钮
@@ -448,8 +498,8 @@ begin
     end;
   end;
   
-  // 设置网格单元格点击事件
-  gridOrders.OnCellClick := gridOrdersCellClick;
+  // 强制刷新
+  Application.ProcessMessages;
 end;
 
 procedure TDeliveryForm.TabRevenueShow(Sender: TObject);
@@ -499,6 +549,23 @@ begin
       dsDeliveryInfo.DataSet := qryDeliveryInfo;
   end;
   
+  // 检查网格控件
+  if Assigned(gridOrders) then
+  else
+  begin
+    gridOrders := TDBGrid.Create(Self);
+    gridOrders.Parent := pnlOrders;
+    gridOrders.Align := alClient;
+    gridOrders.Options := [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack];
+  end;
+  
+  // 确保面板可见
+  if Assigned(pnlOrders) then 
+  begin
+    pnlOrders.Visible := True;
+    gridOrders.Visible := True;
+  end;
+  
   // 初始化订单详情相关变量
   selectedOrderID := -1;
   
@@ -516,11 +583,12 @@ begin
   dtpEndDate.Date := Date;         // 默认结束日期为今天
   
   Caption := '配送员界面';
+  
 end;
 
 procedure TDeliveryForm.gridOrdersCellClick(Column: TColumn);
 begin
-  if not Assigned(gridOrders.DataSource.DataSet) then
+  if not Assigned(gridOrders.DataSource) or not Assigned(gridOrders.DataSource.DataSet) then
     Exit;
     
   selectedOrderID := gridOrders.DataSource.DataSet.FieldByName('order_id').AsInteger;
