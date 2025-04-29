@@ -323,13 +323,13 @@ begin
     OrderWidths := TDictionary<string, Integer>.Create;
     try
       // 定义订单网格列宽
-      OrderWidths.AddOrSetValue('订单编号', 150);
-      OrderWidths.AddOrSetValue('顾客编号', 150);
-      OrderWidths.AddOrSetValue('商家编号', 150);
-      OrderWidths.AddOrSetValue('总金额', 150);
-      OrderWidths.AddOrSetValue('状态', 150);
-      OrderWidths.AddOrSetValue('创建时间', 300);
-      OrderWidths.AddOrSetValue('更新时间', 300);
+      OrderWidths.AddOrSetValue('订单编号', 120);
+      OrderWidths.AddOrSetValue('顾客编号', 120);
+      OrderWidths.AddOrSetValue('商家编号', 120);
+      OrderWidths.AddOrSetValue('总金额', 100);
+      OrderWidths.AddOrSetValue('状态', 120);
+      OrderWidths.AddOrSetValue('创建时间', 200);
+      OrderWidths.AddOrSetValue('更新时间', 200);
       
       AdjustGridColumnWidths(gridOrders, OrderWidths);
     finally
@@ -489,9 +489,9 @@ begin
     begin
       Parent := pnlOrders;
       Caption := '订单详情';
-      Left := btnConfirmDelivery.Left + btnConfirmDelivery.Width + 10;
+      Left := btnConfirmDelivery.Left + btnConfirmDelivery.Width + 15;
       Top := btnConfirmDelivery.Top;
-      Width := 120;
+      Width := 300;
       Height := btnConfirmDelivery.Height;
       OnClick := btnOrderDetailsClick;
       Enabled := False; // 初始状态下禁用按钮
@@ -591,18 +591,18 @@ begin
   if not Assigned(gridOrders.DataSource) or not Assigned(gridOrders.DataSource.DataSet) then
     Exit;
     
-  selectedOrderID := gridOrders.DataSource.DataSet.FieldByName('order_id').AsInteger;
+  selectedOrderID := gridOrders.DataSource.DataSet.FieldByName('订单编号').AsInteger;
   
   // 启用订单详情按钮
   btnOrderDetails.Enabled := True;
   
   // 根据订单状态启用或禁用按钮
-  if gridOrders.DataSource.DataSet.FieldByName('status').AsString = 'processing' then
+  if gridOrders.DataSource.DataSet.FieldByName('状态').AsString = 'processed' then
   begin
     btnAcceptOrder.Enabled := True;
     btnConfirmDelivery.Enabled := False;
   end
-  else if gridOrders.DataSource.DataSet.FieldByName('status').AsString = 'delivering' then
+  else if gridOrders.DataSource.DataSet.FieldByName('状态').AsString = 'delivering' then
   begin
     btnAcceptOrder.Enabled := False;
     btnConfirmDelivery.Enabled := True;

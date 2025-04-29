@@ -523,9 +523,10 @@ begin
       Caption := '订单详情';
       Left := btnConfirmDelivery.Left + btnConfirmDelivery.Width + 10;
       Top := btnConfirmDelivery.Top;
-      Width := 120;
+      Width := 300;
       Height := btnConfirmDelivery.Height;
       OnClick := btnOrderDetailsClick;
+      Enabled := False; // 初始状态下禁用按钮
     end;
   end;
 end;

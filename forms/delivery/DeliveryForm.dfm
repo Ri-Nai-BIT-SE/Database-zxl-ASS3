@@ -231,6 +231,7 @@
           Caption = '接单'
           TabOrder = 1
           OnClick = btnAcceptOrderClick
+          Enabled = False
         end
         object btnConfirmDelivery: TButton
           Left = 330
@@ -244,6 +245,7 @@
           Caption = '确认送达'
           TabOrder = 2
           OnClick = btnConfirmDeliveryClick
+          Enabled = False
         end
       end
     end
