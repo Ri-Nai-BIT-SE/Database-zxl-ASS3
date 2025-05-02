@@ -133,6 +133,9 @@
             <Form>DM</Form>
             <DesignClass>TDataModule</DesignClass>
         </DCCReference>
+        <DCCReference Include="data\OrderStatus.pas">
+            <Form>OrderStatus</Form>
+        </DCCReference>
         <DCCReference Include="data\auth\AuthDataModule.pas">
             <Form>AuthDM</Form>
             <DesignClass>TDataModule</DesignClass>

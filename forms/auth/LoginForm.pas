@@ -61,6 +61,7 @@ type
     procedure edtRegUsernameChange(Sender: TObject); // 添加用户名输入改变事件
     procedure edtContactInfoChange(Sender: TObject);
     procedure edtNameChange(Sender: TObject); // 添加姓名输入改变事件
+    procedure MainFormClose(Sender: TObject; var Action: TCloseAction);
   private
     { Private declarations }
     function GetSelectedRoleTableName(RoleComboBox: TComboBox): string; // Modified signature
@@ -100,6 +101,11 @@ begin
     Result := 'admin';
 end;
 
+// 改为定义一个正常的方法，而不是使用匿名方法
+procedure TLoginForm.MainFormClose(Sender: TObject; var Action: TCloseAction);
+begin
+  Application.Terminate;
+end;
 
 procedure TLoginForm.btnLoginClick(Sender: TObject);
 var
@@ -109,10 +115,12 @@ var
   MerchantID: Integer; // 添加商家ID变量
   DeliveryID: Integer; // 添加外卖员ID变量
   CustomerID: Integer; // 添加顾客ID变量
+  MainForm: TForm; // 保存主窗体的引用
 begin
   LoginSuccessful := False;
   LoggedInUserRole := '';
   LoggedInUserID := -1; // 初始化用户ID为-1
+  MainForm := nil; // 初始化主窗体为nil
 
   SelectedRoleTable := GetSelectedRoleTableName(cmbLoginRole); // Use cmbLoginRole
   Username := edtLoginUsername.Text; // Use edtLoginUsername
@@ -165,25 +173,32 @@ begin
       begin
         // 获取顾客ID
         CustomerID := LoggedInUserID;
-        // 调用ShowCustomerForm方法并传递顾客ID
+        // 创建客户窗体并设置为主窗体
         TCustomerForm.ShowCustomerForm(CustomerID);
+        MainForm := gCustomerForm;
       end
       else if LoggedInUserRole = 'merchant' then
       begin
         // 获取商家ID
         MerchantID := LoggedInUserID;
-        // 修改为传递商家ID
+        // 创建商家窗体并设置为主窗体
         TMerchantForm.ShowMerchantForm(MerchantID);
+        MainForm := gMerchantForm;
       end
       else if LoggedInUserRole = 'delivery' then
       begin
         // 获取外卖员ID
         DeliveryID := LoggedInUserID;
-        // 修改为传递外卖员ID
+        // 创建外卖员窗体并设置为主窗体
         TDeliveryForm.ShowDeliveryForm(DeliveryID);
+        MainForm := gDeliveryForm;
       end
       else if LoggedInUserRole = 'admin' then
-        TAdminForm.ShowAdminForm
+      begin
+        // 创建管理员窗体并设置为主窗体
+        TAdminForm.ShowAdminForm;
+        MainForm := gAdminForm;
+      end
       else
       begin
         ShowMessage('未知的用户角色: ' + LoggedInUserRole);
@@ -191,7 +206,26 @@ begin
         Exit; // 退出 btnLoginClick 过程
       end;
 
-      ModalResult := mrOk; // Close the form with OK result ONLY if a form was created
+      // 如果成功创建了主窗体，则设置正确的事件处理并隐藏登录窗体
+      if Assigned(MainForm) then
+      begin
+        // 监听主窗体的关闭事件，确保关闭主窗体时终止应用程序
+        if MainForm is TForm then
+        begin
+          TForm(MainForm).OnClose := MainFormClose;
+        end;
+        
+        // 隐藏登录窗体
+        Hide;
+        
+        // 由于Application.MainForm是只读属性，我们不能直接修改它
+        // 但我们可以确保主窗体显示在最前面
+        if MainForm is TForm then
+        begin
+          TForm(MainForm).BringToFront;
+          TForm(MainForm).SetFocus;
+        end;
+      end;
     end
     else
     begin
@@ -569,6 +603,5 @@ begin
        edtRegUsername.SetFocus;
   end;
 end;
-
 
 end.

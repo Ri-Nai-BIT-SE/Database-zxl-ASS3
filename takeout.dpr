@@ -49,12 +49,18 @@ begin
     if Assigned(AuthDM) then
       AuthDM.Initialize;
       
+    // 使用Application.CreateForm创建登录窗体作为主窗体
+    // 这会自动将LoginF设置为Application.MainForm
     Application.CreateForm(TLoginForm, LoginF);
+    
+    // 启动应用程序消息循环
     Application.Run;
   finally
     // 释放数据模块实例
     if Assigned(DM) then
       DM.Free;
+    if Assigned(AuthDM) then
+      AuthDM.Free;
   end;
 end.
 
