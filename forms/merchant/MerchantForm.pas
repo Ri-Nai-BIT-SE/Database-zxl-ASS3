@@ -450,19 +450,14 @@ begin
   StartDate := dtpStartDate.Date;
   EndDate := dtpEndDate.Date;
 
-  // 计算总收入
+  // 使用func_calculate_all_earnings函数计算总收入（商家收益率为80%）
   qryRevenue.Close;
-  // 使用v_order_details视图简化收益计算查询，并增加日期筛选
-  SQL := 'SELECT COALESCE(SUM(total_amount), 0) as total_revenue ' +
-         'FROM v_order_details ' +
-         'WHERE merchant_id = :merchant_id AND order_status = ''delivered'' ' +
-         'AND created_at >= :start_date ' +
-         'AND created_at <= :end_date';
+  SQL := 'SELECT func_calculate_all_earnings(''merchant'', :merchant_id, :start_date, :end_date, 0.8) as total_revenue';
   
   qryRevenue.SQL.Text := SQL;
   qryRevenue.ParamByName('merchant_id').AsInteger := FMerchantID;
   qryRevenue.ParamByName('start_date').AsDate := StartDate;
-  qryRevenue.ParamByName('end_date').AsDate := EndDate + 1;  // 加1天以包含结束日期当天
+  qryRevenue.ParamByName('end_date').AsDate := EndDate;
   qryRevenue.Open;
   
   TotalRevenue := qryRevenue.FieldByName('total_revenue').AsFloat;

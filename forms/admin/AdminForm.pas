@@ -525,17 +525,13 @@ begin
   StartDate := dtpStartDate.Date;
   EndDate := dtpEndDate.Date;
 
-  // 计算总收入 - 使用 v_order_details 视图
-  SQL := 'SELECT COALESCE(SUM(total_amount), 0) as total_revenue ' +
-         'FROM v_order_details ' +
-         'WHERE order_status = ''delivered'' ' + // 按视图中的 order_status 过滤
-         'AND created_at >= :start_date ' +
-         'AND created_at <= :end_date';
+  // 计算平台总收入 - 使用func_calculate_all_earnings函数（平台收益率为10%）
+  SQL := 'SELECT func_calculate_all_earnings(''platform'', NULL, :start_date, :end_date, 0.1) as total_revenue';
 
   tmpQuery.Close;
   tmpQuery.SQL.Text := SQL;
   tmpQuery.ParamByName('start_date').AsDate := StartDate;
-  tmpQuery.ParamByName('end_date').AsDate := EndDate + 1;  // 加1天以包含结束日期当天
+  tmpQuery.ParamByName('end_date').AsDate := EndDate;
   tmpQuery.Open;
 
   TotalRevenue := tmpQuery.FieldByName('total_revenue').AsFloat;

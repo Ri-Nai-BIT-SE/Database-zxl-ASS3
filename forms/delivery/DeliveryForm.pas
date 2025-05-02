@@ -409,18 +409,14 @@ begin
   StartDate := dtpStartDate.Date;
   EndDate := dtpEndDate.Date;
 
-  // 计算总收益 (假设每单收益是订单总金额的10%)
+  // 使用func_calculate_all_earnings函数计算总收益 (配送员收益率为10%)
   qryRevenue.Close;
-  SQL := 'SELECT COALESCE(SUM(total_amount * 0.1), 0) as total_revenue ' +
-         'FROM v_order_details ' +
-         'WHERE delivery_man_id = :delivery_id AND order_status = ''delivered'' ' +
-         'AND created_at >= :start_date ' +
-         'AND created_at <= :end_date';
+  SQL := 'SELECT func_calculate_all_earnings(''delivery_man'', :delivery_id, :start_date, :end_date, 0.1) as total_revenue';
   
   qryRevenue.SQL.Text := SQL;
   qryRevenue.ParamByName('delivery_id').AsInteger := FDeliveryID;
   qryRevenue.ParamByName('start_date').AsDate := StartDate;
-  qryRevenue.ParamByName('end_date').AsDate := EndDate + 1;  // 加1天以包含结束日期当天
+  qryRevenue.ParamByName('end_date').AsDate := EndDate;
   qryRevenue.Open;
   
   TotalRevenue := qryRevenue.FieldByName('total_revenue').AsFloat;
