@@ -62,6 +62,7 @@ type
     procedure edtContactInfoChange(Sender: TObject);
     procedure edtNameChange(Sender: TObject); // 添加姓名输入改变事件
     procedure MainFormClose(Sender: TObject; var Action: TCloseAction);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
   private
     { Private declarations }
     function GetSelectedRoleTableName(RoleComboBox: TComboBox): string; // Modified signature
@@ -103,6 +104,12 @@ end;
 
 // 改为定义一个正常的方法，而不是使用匿名方法
 procedure TLoginForm.MainFormClose(Sender: TObject; var Action: TCloseAction);
+begin
+  Application.Terminate;
+end;
+
+// 添加FormClose事件处理
+procedure TLoginForm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   Application.Terminate;
 end;
