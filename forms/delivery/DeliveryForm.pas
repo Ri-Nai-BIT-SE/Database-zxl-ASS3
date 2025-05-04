@@ -297,9 +297,10 @@ begin
     '  created_at AS 创建时间, ' +
     '  updated_at AS 更新时间 ' +
     'FROM v_order_details ' +
-    'WHERE order_status = ''processed'' ' +
-    'AND delivery_man_id IS NULL ' +
+    'WHERE (order_status = ''processed'' AND delivery_man_id IS NULL) ' +
+    'OR delivery_man_id = :delivery_id ' +
     'ORDER BY created_at DESC';
+  qryOrders.ParamByName('delivery_id').AsInteger := FDeliveryID;
   
   try
     qryOrders.Open;
